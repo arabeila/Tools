@@ -24,10 +24,10 @@ class ToolsServiceProvider extends ServiceProvider
 
         $this->mergeConfigFrom(__DIR__.'/config/tools.php', 'tools');
 
-        $this->loadViewsFrom(__DIR__.'/resources/stubs', 'tools');
+        $this->loadViewsFrom(__DIR__.'/stubs', 'tools');
 
         $this->publishes([
-            __DIR__.'/Commands/stubs' => resource_path('views/stubs'),
+            __DIR__.'/Commands/stubs' => resource_path('stubs'),
         ]);
 
         if ($this->app->runningInConsole()) {
