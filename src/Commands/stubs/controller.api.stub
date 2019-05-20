@@ -1,0 +1,52 @@
+<?php
+
+namespace DummyNamespace;
+
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+/**
+ * XX管理
+ * @desc XX管理
+*/
+class DummyClass extends Controller
+{
+    /**
+     * XX列表
+     * @desc XX列表
+    */
+    public function index(Request $request)
+    {
+        if(!$request->ajax() && $request->get('isAjax',1)){
+
+        }
+
+    }
+
+    /**
+     * 保存XX
+     * @desc 保存XX
+    */
+    public function store(Request $request)
+    {
+
+    }
+
+    /**
+     * 更新XX
+     * @desc 更新XX
+    */
+    public function update(Request $request, $id)
+    {
+
+    }
+
+    /**
+     * 删除
+     * @desc 删除
+    */
+    public function batch(Request $request){
+
+    }
+
+}

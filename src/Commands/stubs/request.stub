@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class DummyClass extends FormRequest
+{
+    public function authorize()
+    {
+        return true;
+    }
+
+    public function rules()
+    {
+        $rules = [
+            'POST'=>[
+                'title'=>'bail|required',
+            ],
+            'PUT'=>[
+                'title'=>'bail|required',
+            ],
+            'DELETE'=>[
+                'ids'=>'bail|required',
+            ],
+        ];
+
+        return $rules[$this->method()];
+    }
+
+    public function message(){
+        return [
+            'title.required' => '请输入标题',
+            'ids.required'   => '请选择数据',
+        ];
+    }
+}

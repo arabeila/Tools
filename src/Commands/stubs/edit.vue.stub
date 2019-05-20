@@ -1,0 +1,68 @@
+<template>
+    <div>
+        <Form ref="DummyModelVariableForm" :model="form" :rules="rules" :label-width="100">
+            <FormItem label="标题" prop="title">
+                <Input v-model.trim="form.title" clearable placeholder="请输入标题"></Input>
+            </FormItem>
+            <FormItem>
+                <Button type="warning" @click="handleSubmit">更新</Button>
+                <Button type="dashed" @click="handleReset" style="margin-left: 8px;">重置</Button>
+            </FormItem>
+        </Form>
+    </div>
+</template>
+<script>
+    export default {
+        props:{
+            DummyModelVariable:{
+                type:Object,
+                required:true,
+            },
+        },
+        data(){
+            return {
+                form:{
+                    title:null,
+                },
+                rules:{
+                    title:[
+                        {
+                            required: true,
+                            message:'请输入标题',
+                        },
+                    ],
+                },
+            };
+        },
+        mounted(){
+            this.recover();
+        },
+        methods:{
+            handleSubmit(){
+                this.$refs.DummyModelVariableForm.validate(valid=>{
+                    if(valid){
+                        //todo add ajax method
+
+                        this.close();
+                    }else{
+                        this.$Notice.warning({
+                            title: '表单参数有误',
+                            desc: '请检查',
+                        });
+                    }
+                });
+            },
+            handleReset(){
+                this.recover();
+            },
+            recover(){
+                this.form = JSON.parse(JSON.stringify(this.DummyModelVariable));
+
+                this.$refs.DummyModelVariableForm.resetFields();
+            },
+            close() {
+                setTimeout("window.opener=null;window.close()", 3000);
+            },
+        },
+    };
+</script>

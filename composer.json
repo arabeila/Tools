@@ -1,0 +1,25 @@
+{
+  "name": "arabeila/tools",
+  "description": "江苏阿拉贝拉信息技术有限公司",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7"
+  },
+  "autoload": {
+    "psr-4": {
+      "Arabeila\\Tools\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Arabeila\\Tools\\ToolsServiceProvider"
+      ],
+      "aliases": {
+        "Rakan": "Arabeila\\Tools\\Facade"
+      }
+    }
+  }
+}

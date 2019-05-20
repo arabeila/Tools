@@ -1,0 +1,80 @@
+<?php
+
+namespace DummyNamespace;
+
+use DummyFullModelClass;
+use DummyFullRequestClass;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Arabeila\Tools\Supports\Help;
+
+/**
+ * DummyModelName管理
+ * @desc DummyModelName管理
+*/
+class DummyClass extends Controller
+{
+    /**
+     * DummyModelName列表
+     * @desc DummyModelName列表
+    */
+    public function index(Request $request)
+    {
+        if(!$request->ajax() && $request->get('isAjax',1)){
+            return view('DummyBladePath.index');
+        }
+
+        $where=[];
+
+        if($request->filled('title')){
+            $where[]=[
+                'title','like','%'.$request->get('title').'%',
+            ];
+        }
+
+        $DummyModelPluralLowerCase = DummyModelClass::where($where)->latest()->paginate((int)$request->get('page'));
+
+        return $DummyModelPluralLowerCase;
+    }
+
+    /**
+     * 保存DummyModelName
+     * @desc 保存DummyModelName
+    */
+    public function store(DummyRequest $request)
+    {
+        $data=[
+            'title'=> $request->get('title'),
+        ];
+
+        $DummyModelVariable = DummyModelClass::create($data);
+
+        return Help::reply($DummyModelVariable,$DummyModelVariable ? 'DummyModelName创建成功' : 'DummyModelName创建失败');
+    }
+
+    /**
+     * 更新DummyModelName
+     * @desc 更新DummyModelName
+    */
+    public function update(DummyRequest $request, $id)
+    {
+        $DummyModelVariable = DummyModelClass::findOrFail($id);
+
+        $DummyModelVariable->title = $request->get('title');
+
+        $bool = $DummyModelVariable->save();
+
+        return Help::reply($bool ,$bool  ? 'DummyModelName更新成功' : 'DummyModelName更新失败');
+    }
+
+    /**
+     * 删除DummyModelName
+     * @desc 删除DummyModelName
+    */
+    public function batch(DummyRequest $request){
+        $bool = DummyModelClass::whereIn('id', $request->get('ids'))->delete();
+
+        return Help::reply($bool ,$bool  ? 'DummyModelName删除成功' : 'DummyModelName删除失败');
+    }
+
+}

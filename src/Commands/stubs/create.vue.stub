@@ -1,0 +1,61 @@
+<template>
+    <div>
+        <Form ref="DummyModelVariableForm" :model="form" :rules="rules" :label-width="100">
+            <FormItem label="标题" prop="title">
+                <Input v-model.trim="form.title" clearable placeholder="请输入标题"></Input>
+            </FormItem>
+            <FormItem>
+                <Button type="primary" @click="handleSubmit">创建</Button>
+                <Button type="dashed" @click="handleReset" style="margin-left: 8px;">重置</Button>
+            </FormItem>
+        </Form>
+    </div>
+</template>
+<script>
+    export default {
+        data(){
+            return {
+                form:{
+                    title:null,
+                },
+                rules:{
+                    title:[
+                        {
+                            required: true,
+                            message:'请输入标题',
+                        },
+                    ],
+                },
+            };
+        },
+        mounted(){
+
+        },
+        methods:{
+            handleSubmit(){
+                this.$refs.DummyModelVariableForm.validate(valid=>{
+                    if(valid){
+                        //todo add ajax method
+
+                        this.clean();
+                    }else{
+                        this.$Notice.warning({
+                            title: '表单参数有误',
+                            desc: '请检查',
+                        });
+                    }
+                });
+            },
+            handleReset(){
+                this.clean();
+            },
+            clean(){
+                this.form={
+                    title:null,
+                };
+
+                this.$refs.DummyModelVariableForm.resetFields();
+            },
+        },
+    };
+</script>

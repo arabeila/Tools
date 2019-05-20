@@ -1,0 +1,124 @@
+<template>
+    <div>
+        <Form @submit.native.prevent>
+            <FormItem>
+                <Row>
+                    <Col span="4">
+                        <Col span="8" style="text-align: right;">
+                            标题:
+                        </Col>
+                        <Col span="16">
+                            <Input v-model.trim="query.title" clearable></Input>
+                        </Col>
+                    </Col>
+
+                    <Button type="primary" @click="handleSearch">查询</Button>
+                    <Button type="success" @click="handleReload">全部</Button>
+                    <Button type="info" @click="handleRefresh">刷新</Button>
+                </Row>
+            </FormItem>
+        </Form>
+
+        <Poptip title="数据删除不能恢复,继续操作?"
+                confirm
+                @on-ok="handleDelete"
+                @on-cancel="javascript:;">
+                <Button type="error" :disabled="deleteStatus">删除</Button>
+        </Poptip>
+
+        <Table :columns="columns"
+               :data="data"
+               :loading="loading"
+               @on-selection-change="handleSelectionChange">
+        </Table>
+
+        <Page :total="query.total"
+              show-total
+              show-elevator
+              show-sizer
+              @on-change="handlePageChange"
+              @on-page-size-change="handlePageSizeChange">
+        </Page>
+    </div>
+</template>
+<script>
+    export default {
+        data() {
+            return {
+                columns:[],
+                data:[],
+                loading:false,
+                query:{
+                    page:1,
+                    per_page:10,
+                    total:0,
+                    title:null,
+                },
+                selection:[],
+            };
+        },
+        computed(){
+            deleteStatus(){
+                return !this.selection.length;
+            },
+        },
+        mounted(){
+            this.getData();
+        },
+        methods:{
+            getData(){
+                this.loading = true;
+                this.selection = [];
+
+                //todo add ajax method
+
+                this.loading = false;
+            },
+            handleSearch(){
+                this.query.page = 1;
+
+                this.getData();
+            },
+            handleReload(){
+                this.clear();
+                this.getData();
+            },
+            handleRefresh(){
+                this.getData();
+            },
+            handlePageChange(page){
+                this.query.page = page;
+
+                this.getData();
+            },
+            handlePageSizeChange(per_page){
+                this.query.page = 1;
+                this.query.per_page = per_page;
+
+                this.getData();
+            },
+            handleSelectionChange(selection){
+                this.selection = selection;
+            },
+            handleDelete(){
+                let form={
+                    ids : this.selection.flatMap(function(o){
+                        return o.id;
+                    }),
+                };
+
+                //todo add ajax method
+
+                this.getData();
+            },
+            clear(){
+                this.query = {
+                    page:1,
+                    per_Page:10,
+                    total:0,
+                    title:null,
+                };
+            },
+        },
+    };
+</script>

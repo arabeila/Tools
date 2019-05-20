@@ -1,0 +1,233 @@
+<template>
+    <div>
+        <Form @submit.native.prevent>
+            <FormItem>
+                <Row>
+                    <Col span="4">
+                        <Col span="8" style="text-align: right;">
+                            标题:
+                        </Col>
+                        <Col span="16">
+                            <Input v-model.trim="query.title" clearable></Input>
+                        </Col>
+                    </Col>
+
+                    <Button type="primary" @click="handleSearch">查询</Button>
+                    <Button type="success" @click="handleReload">全部</Button>
+                    <Button type="info" @click="handleRefresh">刷新</Button>
+                </Row>
+            </FormItem>
+        </Form>
+
+        <Poptip title="数据删除不能恢复,继续操作?"
+                confirm
+                @on-ok="handleDelete"
+                @on-cancel="javascript:;">
+                <Button type="error" :disabled="deleteStatus">删除</Button>
+        </Poptip>
+
+        <Table :columns="columns"
+               :data="data"
+               :loading="loading"
+               @on-selection-change="handleSelectionChange">
+        </Table>
+
+        <Page :total="query.total"
+              show-total
+              show-elevator
+              show-sizer
+              @on-change="handlePageChange"
+              @on-page-size-change="handlePageSizeChange">
+        </Page>
+
+        <Modal v-model="visible"
+            :title="form.id ? '编辑DummyModelVariable':'添加DummyModelVariable'"
+            width="1200">
+                <Form ref="DummyModelVariableForm" :model="form" :rules="rules" :label-width="100">
+                    <FormItem label="标题" prop="title">
+                        <Input v-model.trim="form.title" clearable placeholder="请输入标题"></Input>
+                    </FormItem>
+                </Form>
+                <div slot="footer">
+                    <Button :type="form.id ?'warning':'primary'" @click="handleSubmit">
+                        {{form.id ? '修改':'创建'}}
+                    </Button>
+                    <Button type="dashed" @click="handleReset">重置</Button>
+                </div>
+        </Modal>
+    </div>
+</template>
+<script>
+    export default {
+        data() {
+            return {
+                columns:[
+                    {
+                       type: 'selection',
+                       width: 30,
+                       align: 'center'
+                    },
+                    {
+                        title: '标题',
+                        align: 'center',
+                        key:'title',
+                    },
+                    {
+                        title: '操作',
+                        align: 'center',
+                        render: (h, params) => {
+                            return h('div', [
+                                h('Button', {
+                                    props: {
+                                        type: 'error',
+                                        size: 'small',
+                                    },
+                                    style: {
+                                        marginRight: '5px'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.handleEdit(params.row);
+                                        }
+                                    }
+                                }, '编辑'),
+                            ]);
+                        },
+                    },
+                ],
+                data:[],
+                form:{
+                    id:null,
+                    title:null,
+                },
+                loading:false,
+                query:{
+                    page:1,
+                    per_page:10,
+                    total:0,
+                    title:null,
+                },
+                rules:{
+                    title:[
+                        {
+                            required:true,
+                            message:'请输入标题',
+                        },
+                    ],
+                },
+                selection:[],
+                visible:false,
+            };
+        },
+        computed(){
+            deleteStatus(){
+                return !this.selection.length;
+            },
+        },
+        mounted(){
+            this.getData();
+        },
+        methods:{
+            getData(){
+                this.loading = true;
+                this.selection = [];
+                this.data = [];
+
+                this.cancel();
+
+                //todo add ajax method
+
+                this.loading = false;
+            },
+            handleSearch(){
+                this.query.page = 1;
+
+                this.getData();
+            },
+            handleReload(){
+                this.clear();
+                this.getData();
+            },
+            handleRefresh(){
+                this.getData();
+            },
+            handlePageChange(page){
+                this.query.page = page;
+
+                this.getData();
+            },
+            handlePageSizeChange(per_page){
+                this.query.page = 1;
+                this.query.per_page = per_page;
+
+                this.getData();
+            },
+            handleSelectionChange(selection){
+                this.selection = selection;
+            },
+            handleCreate(){
+                this.clean();
+
+                this.visible = true;
+            },
+            handleEdit(row){
+                this.recover(row)
+
+                this.visible = true;
+            },
+            handleSubmit(){
+                this.$refs.DummyModelVariableForm.validate(valid=>{
+                    if(valid){
+                        if(this.form.id){
+                            //todo add ajax method
+
+                            this.getData();
+                        }else{
+                            //todo add ajax method
+
+                            this.getData();
+                        }
+                    }else{
+                        this.$Notice.warning({
+                            title: '表单参数有误',
+                            desc: '请检查',
+                        });
+                    }
+                });
+            },
+            handleDelete(){
+                let form={
+                    ids : this.selection.flatMap(function(o){
+                        return o.id;
+                    }),
+                };
+
+                //todo add ajax method
+
+                this.getData();
+            },
+            clear(){
+                this.query = {
+                    page:1,
+                    per_Page:10,
+                    total:0,
+                    title:null,
+                };
+            },
+            clean(){
+                this.form = {
+                    id:null,
+                    title:null,
+                };
+
+                this.$refs.DummyModelVariableForm.resetFields();
+            },
+            recover(row){
+                this.form = this.form = JSON.parse(JSON.stringify(row));
+            },
+            cancel(){
+                this.visible = false;
+            },
+        },
+    };
+</script>
