@@ -49,8 +49,8 @@ class CreateController extends ControllerMakeCommand
             $stub = str_replace('.stub', '.api.stub', $stub);
         }
 
-        if (file_exists(resource_path('views'.$stub))) {
-            return resource_path('views'.$stub);
+        if (file_exists(resource_path($stub))) {
+            return resource_path($stub);
         }
 
         return __DIR__.$stub;
