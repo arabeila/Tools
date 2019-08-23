@@ -50,6 +50,7 @@ class CreateController extends ControllerMakeCommand
         }
 
         if (file_exists(resource_path($stub))) {
+
             return resource_path($stub);
         }
 

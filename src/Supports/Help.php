@@ -26,4 +26,21 @@ class Help
         ]);
     }
 
+    /**
+     * 生成随机编号
+     * @desc
+     * @param $flag string 标志位 默认 null 订单号 S 父订单 P 支付单 R 请求日志 F 反馈日志
+     * @return string
+     * @throws
+     */
+    public static function no($flag = null)
+    {
+        $prefix = config('app.prefix').strtoupper($flag).date('ymdHis');
+
+        $no = $prefix.str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        return $no;
+    }
+
+
 }

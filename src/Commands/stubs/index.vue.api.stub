@@ -95,6 +95,7 @@
                         },
                     },
                 ],
+                currentRow:{},
                 data:[],
                 form:{
                     id:null,
@@ -119,7 +120,7 @@
                 visible:false,
             };
         },
-        computed(){
+        computed:{
             deleteStatus(){
                 return !this.selection.length;
             },
@@ -171,7 +172,9 @@
                 this.visible = true;
             },
             handleEdit(row){
-                this.recover(row)
+                this.currentRow = JSON.parse(JSON.stringify(row));
+
+                this.recover();
 
                 this.visible = true;
             },
@@ -206,6 +209,13 @@
 
                 this.getData();
             },
+            handleReset() {
+                if (this.form.id) {
+                    this.clean();
+                } else {
+                    this.recover();
+                }
+            },
             clear(){
                 this.query = {
                     page:1,
@@ -222,11 +232,17 @@
 
                 this.$refs.DummyModelVariableForm.resetFields();
             },
-            recover(row){
-                this.form = this.form = JSON.parse(JSON.stringify(row));
+            recover(){
+                this.form = JSON.parse(JSON.stringify(this.currentRow));
             },
             cancel(){
                 this.visible = false;
+            },
+            notice(res){
+                this.$Notice[res.code ===200?'success':'error']({
+                    title:res.msg,
+                    desc:res.code ===200?'':'请重试',
+                });
             },
         },
     };
