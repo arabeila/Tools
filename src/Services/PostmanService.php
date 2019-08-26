@@ -77,11 +77,11 @@ class PostmanService
         for ($i = 0; $i < count($this->list); $i++) {
             $class = $this->list[$i]['controller'];
 
-            if(in_array($class,$res)){
+            if (in_array($class, $res)) {
                 continue;
             }
 
-            array_push($res,$class);
+            array_push($res, $class);
 
             $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
 
@@ -116,7 +116,7 @@ class PostmanService
      */
     public function getPermissions($guard = "Admin")
     {
-        if(!isset($this->permissions[$guard])){
+        if (!isset($this->permissions[$guard])) {
             $this->permissions[$guard] = [];
         }
 
@@ -218,7 +218,6 @@ class PostmanService
         }
 
         $title = $this->formatTitle($lines[1]);
-//        $desc = $this->formatDesc($lines[1]);
 
         return $title;
     }
@@ -264,13 +263,27 @@ class PostmanService
             "path" => explode('/', $uri),
         ];
 
-        return [
-            'method'      => $method,
-            'header'      => [],
-            'body'        => $body,
-            'url'         => $url,
-            'description' => " ",
-        ];
+        if ($method == 'GET') {
+            if($var){
+                $url['query'] = $var;
+            }
+
+            return [
+                'method'      => $method,
+                'header'      => [],
+                'url'         => $url,
+                'description' => " ",
+            ];
+        } else {
+
+            return [
+                'method'      => $method,
+                'header'      => [],
+                'body'        => $body,
+                'url'         => $url,
+                'description' => " ",
+            ];
+        }
     }
 
     /**
