@@ -21,6 +21,7 @@ class PermissionService
     public function __construct()
     {
         $this->blackList = config('tools.blackList');
+
         $this->getControllers();
     }
 
@@ -32,7 +33,7 @@ class PermissionService
         $routes = Route::getRoutes();
 
         foreach ($routes as $route) {
-            $arr = array();
+            $arr = [];
             $actionName = $route->getActionName();
 
             preg_match('/\@/', $actionName, $end, PREG_OFFSET_CAPTURE);
@@ -53,7 +54,14 @@ class PermissionService
 
             $arr['method'] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
             $arr['uri'] = method_exists($route, 'getPath') ? $route->getPath() : $route->uri;
-            array_push($this->list, $arr);
+
+            if (!isset($this->list[$arr['controller']])) {
+                $this->list[$arr['controller']] = [
+                    $arr,
+                ];
+            } else {
+                array_push($this->list[$arr['controller']], $arr);
+            }
         }
     }
 
@@ -64,28 +72,31 @@ class PermissionService
     {
         $data = [];
 
-        for ($i = 0; $i < count($this->list); $i++) {
-            $class = $this->list[$i]['controller'];
-            $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
+        foreach ($this->list as $item) {
+            foreach ($item as $value) {
+                $class = $value['controller'];
 
-            $reflection = new \ReflectionClass($class);
+                $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
 
-            $actions = $this->getActions($class);
+                $reflection = new \ReflectionClass($class);
 
-            switch (count($className)) {
-                case 1:
-                    //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
-                    break;
-                case 2:
-                    $data[$className[0]][$className[0].'/'.$className[1]]['class'] = $this->getClassDoc($reflection);
-                    $data[$className[0]][$className[0].'/'.$className[1]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                    $data[$className[0]][$className[0].'/'.$className[1]]['uri'] = $this->list[$i]['uri'];
-                    break;
-                case 3:
-                    $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['class'] = $this->getClassDoc($reflection);
-                    $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                    $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['uri'] = $this->list[$i]['uri'];
-                    break;
+                $actions = $this->getActions($class);
+
+                switch (count($className)) {
+                    case 1:
+                        //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
+                        break;
+                    case 2:
+                        $data[$className[0]][$className[0].'/'.$className[1]]['class'] = $this->getClassDoc($reflection);
+                        $data[$className[0]][$className[0].'/'.$className[1]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
+                        $data[$className[0]][$className[0].'/'.$className[1]]['uri'] = $value['uri'];
+                        break;
+                    case 3:
+                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['class'] = $this->getClassDoc($reflection);
+                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
+                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['uri'] = $value['uri'];
+                        break;
+                }
             }
         }
         return $data;
@@ -96,7 +107,7 @@ class PermissionService
      */
     public function getPermissions($guard = "Admin")
     {
-        if(!isset($this->permissions[$guard])){
+        if (!isset($this->permissions[$guard])) {
             $this->permissions[$guard] = [];
         }
 
@@ -124,10 +135,9 @@ class PermissionService
     public function getActions($controller)
     {
         $obj = [];
-        foreach ($this->list as $value) {
-            if ($value['controller'] == $controller) {
-                $obj[] = $value['action'];
-            }
+
+        foreach ($this->list[$controller] as $value) {
+            $obj[] = $value['action'];
         }
         return $obj;
     }
@@ -137,9 +147,9 @@ class PermissionService
      */
     public function getRequestUrl($controller, $action)
     {
-        foreach ($this->list as $one) {
-            if ($one['controller'] == $controller && $one['action'] == $action) {
-                return env('APP_URL').$one['uri'];
+        foreach ($this->list[$controller] as $item) {
+            if ($item['action'] == $action) {
+                return env('APP_URL').$item['uri'];
             }
         }
         return null;
@@ -150,9 +160,9 @@ class PermissionService
      */
     public function getRequestMethod($controller, $action)
     {
-        foreach ($this->list as $one) {
-            if ($one['controller'] == $controller && $one['action'] == $action) {
-                return $one['method'];
+        foreach ($this->list[$controller] as $item) {
+            if ($item['action'] == $action) {
+                return $item['method'];
             }
         }
         return null;
@@ -297,22 +307,20 @@ class PermissionService
      */
     public function formatParams($lines)
     {
-        $reg = '/@params.*/i';
+        $reg = '/@var.*/i';
         $params = [];
 
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false)
                 if (!empty($tmp)) {
-                    $temp = explode(' ', trim(str_replace('@params', "", $tmp[0])));
+                    $temp = explode(' ', trim(str_replace('@var', "", $tmp[0])));
 
-                    if (count($temp) == 7) {
-                        $params[$k]['name'] = $temp[0];
-                        $params[$k]['type'] = $temp[1];
+                    if (count($temp) == 5) {
+                        $params[$k]['type'] = $temp[0];
+                        $params[$k]['name'] = $temp[1];
                         $params[$k]['require'] = $temp[2];
                         $params[$k]['default'] = $temp[3];
-                        $params[$k]['min'] = $temp[4];
-                        $params[$k]['max'] = $temp[5];
-                        $params[$k]['comment'] = $temp[6];
+                        $params[$k]['comment'] = $temp[4];
                     }
                 }
         }
