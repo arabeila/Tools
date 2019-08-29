@@ -1,0 +1,246 @@
+<template>
+    <div>
+        <section class="content container-fluid">
+            <Button type="success" @click="handleCreate">添加</Button>
+            <a-table :columns="columns" :dataSource="data"
+                     :childrenColumnName="childrenColumnName" :pagination="false">
+                <template slot="tag" slot-scope="text,row,index">
+                    <span v-if="row.if_show === 1">
+                        <Tag color="success">显示</Tag>
+                    </span>
+                    <span v-else>
+                        <Tag color="error">隐藏</Tag>
+                    </span>
+                </template>
+                <template slot="action" slot-scope="text,row,index">
+                    <span v-if="row.level != 2">
+                        <Button size="small" type="success" @click="handleCreate(row)">添加</Button>
+                    </span>
+
+                    <Button size="small" type="warning" @click="handleEdit(row)">编辑</Button>
+
+                    <Poptip title="确定要删除吗?" confirm @on-ok="handleDelete(row)">
+                        <Button size="small" type="error">删除</Button>
+                    </Poptip>
+                </template>
+            </a-table>
+
+            <Modal :title="form.id ? '编辑分类':'创建分类'" v-model="visible">
+                <Form ref="categoryForm" :model="form" :rules="rules" :label-width="100">
+                    <FormItem label="父级目录">
+                        <Input type="text" v-model="form.parent_name" readonly></Input>
+                    </FormItem>
+
+                    <FormItem label="名称" prop="name">
+                        <Input type="text" v-model.trim="form.name" placeholder="请输入分类名称" clearable></Input>
+                    </FormItem>
+
+                    <FormItem label="排序" prop="sort">
+                        <InputNumber :max="255" :min="0" v-model.trim="form.sort"></InputNumber>
+                    </FormItem>
+
+                    <FormItem label="是否可见" prop="if_show">
+                        <RadioGroup v-model="form.if_show">
+                            <Radio :label="1">可见</Radio>
+                            <Radio :label="2">隐藏</Radio>
+                        </RadioGroup>
+                    </FormItem>
+                </Form>
+                <div slot="footer">
+                    <Button :type="form.id ? 'warning':'success'" @click="handleSubmit">
+                        {{form.id ? '修改' : '创建'}}
+                    </Button>
+                </div>
+            </Modal>
+        </section>
+    </div>
+</template>
+<script>
+    export default {
+        data() {
+            return {
+                visible: false,
+                form: {
+                    id: null,
+                    parent_name: 'Root',
+                    parent_id: 0,
+                    name: null,
+                    if_show: 1,
+                    sort: 0,
+                },
+                columns: [
+                    {
+                        title: '#',
+                        width: 100,
+                        align: 'center',
+                    },
+                    {
+                        title: '序号',
+                        dataIndex: 'id',
+                        key: 'id',
+                        align: 'center',
+                    },
+                    {
+                        title: '分类名称',
+                        dataIndex: 'name',
+                        key: 'name',
+                    },
+                    {
+                        title: '排序',
+                        dataIndex: 'sort',
+                        key: 'sort',
+                    },
+                    {
+                        title: '层级',
+                        dataIndex: 'level',
+                        key: 'level',
+                    },
+                    {
+                        title: '路径',
+                        dataIndex: 'path',
+                        key: 'path',
+                    },
+                    {
+                        title: '是否可见',
+                        key: 'if_show',
+                        scopedSlots: {
+                            customRender: 'tag',
+                        }
+                    },
+                    {
+                        title: '操作',
+                        scopedSlots: {
+                            customRender: 'action',
+                        }
+                    }
+                ],
+                data: [],
+                childrenColumnName: "all_children",
+                rules: {
+                    name: {
+                        required: true,
+                        message: '请输入分类名称',
+                    },
+                    sort: {
+                        required: true,
+                        message: '请输入排序',
+                    },
+                    if_show: {
+                        required: true,
+                        message: '请选择是否显示',
+                    },
+                },
+            }
+        },
+        mounted() {
+            this.getData();
+        },
+        methods: {
+            getData() {
+                this.visible = false;
+
+                this.$admin.getCategories().then(res => {
+                    this.data = res;
+
+                    this.data.forEach(function ($item) {
+                        $item['all_children'].forEach(function ($value) {
+                            $value['all_children'].forEach(function ($val) {
+                                if ($val.level === 2) {
+                                    delete $val.all_children;
+                                }
+                            });
+                        })
+                    });
+                });
+            },
+            handleCreate(row) {
+                this.visible = true;
+
+                let type = Object.prototype.toString;
+
+                this.$refs.categoryForm.resetFields();
+
+                if (type.call(row) === "[object Object]") {
+
+                    this.cover(row);
+                } else {
+
+                    this.clean();
+                }
+            },
+            handleEdit(row) {
+                this.visible = true;
+
+                this.form = JSON.parse(JSON.stringify(row));
+                if (row.parent_id === 0) {
+                    this.form.parent_id = 0;
+                    this.form.parent_name = 'Root';
+                } else {
+                    this.form.parent_id = row.parent.id
+                    this.form.parent_name = row.parent.name;
+                }
+            },
+            handleSubmit() {
+                this.$refs.categoryForm.validate((valid) => {
+                    if (valid) {
+                        if (this.form.id) {
+                            this.$admin.putCategory(this.form).then(res => {
+                                this.notice(res);
+
+                                this.getData();
+                            });
+                        } else {
+                            this.$admin.postCategory(this.form).then(res => {
+                                this.notice(res);
+
+                                this.getData();
+                            });
+                        }
+                    } else {
+                        this.$Notice.warning({
+                            title: '表单参数有误',
+                            desc: '请检查',
+                        });
+                    }
+                });
+            },
+            handleDelete(row) {
+                let form = {
+                    id: row.id,
+                };
+
+                this.$admin.delCategory(form).then(res => {
+                    this.notice(res);
+
+                    this.getData();
+                });
+            },
+            clean() {
+                this.form = {
+                    id: null,
+                    parent_name: 'Root',
+                    parent_id: 0,
+                    name: null,
+                    if_show: 1,
+                    sort: 0,
+                };
+            },
+            cover(row) {
+                this.form = {
+                    id: null,
+                    parent_name: row.name,
+                    parent_id: row.id,
+                    name: null,
+                    if_show: 1,
+                    sort: 0,
+                };
+            },
+            notice(res) {
+                this.$Notice[res.code === 200 ? 'success' : 'error']({
+                    title: res.msg,
+                    desc: res.code === 200 ? '' : '请重试',
+                });
+            },
+        }
+    }
+</script>
