@@ -107,6 +107,8 @@ class PermissionService
      */
     public function getPermissions($guard = "Admin")
     {
+        $this->index();
+
         if (!isset($this->permissions[$guard])) {
             $this->permissions[$guard] = [];
         }
@@ -149,7 +151,7 @@ class PermissionService
     {
         foreach ($this->list[$controller] as $item) {
             if ($item['action'] == $action) {
-                return env('APP_URL').$item['uri'];
+                return config('app.url').$item['uri'];
             }
         }
         return null;
@@ -220,7 +222,9 @@ class PermissionService
             return [];
         }
 
-        if (preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
+        list($doc) = preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines);
+
+        if ($doc === false) {
             return [];
         }
 
@@ -252,8 +256,9 @@ class PermissionService
             return [];
         }
 
+        list($doc) = preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines);
 
-        if (preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
+        if ($doc === false) {
             return [];
         }
 
@@ -311,18 +316,17 @@ class PermissionService
         $params = [];
 
         foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false)
+            if (preg_match($reg, trim($line), $tmp) !== false) {
                 if (!empty($tmp)) {
-                    $temp = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+                    list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
 
-                    if (count($temp) == 5) {
-                        $params[$k]['type'] = $temp[0];
-                        $params[$k]['name'] = $temp[1];
-                        $params[$k]['require'] = $temp[2];
-                        $params[$k]['default'] = $temp[3];
-                        $params[$k]['comment'] = $temp[4];
-                    }
+                    $params[$k]['type'] = $type;
+                    $params[$k]['name'] = $name;
+                    $params[$k]['require'] = $require;
+                    $params[$k]['default'] = $default;
+                    $params[$k]['comment'] = $comment;
                 }
+            }
         }
 
         sort($params);
@@ -340,11 +344,10 @@ class PermissionService
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false) {
                 if (!empty($tmp)) {
-                    $temp = explode(' ', trim(str_replace('@return', "", $tmp[0])));
-                    if (count($temp) == 2) {
-                        $return[$k]['self_type'] = $temp[0];
-                        $return[$k]['data_type'] = $temp[1];
-                    }
+                    list($self_type) = explode(' ',trim(str_replace('@return',"",$tmp[0])));
+
+                    $return[$k]['self_type']  = $self_type;
+//                    $return[$k]['data_type']  = ;
                 }
             }
         }
