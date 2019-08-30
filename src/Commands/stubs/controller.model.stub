@@ -76,11 +76,11 @@ class DummyClass extends Controller
     */
     public function update(DummyRequest $request, $id)
     {
-        $DummyModelVariable = DummyModelClass::findOrFail($id);
+        $data=[
+           'title'=> $request->get('title'),
+        ];
 
-        $DummyModelVariable->title = $request->get('title');
-
-        $bool = $DummyModelVariable->save();
+        $bool = DummyModelClass::where('id',$id)->update($data);
 
         return Help::reply($bool ,$bool  ? 'DummyModelName更新成功' : 'DummyModelName更新失败');
     }

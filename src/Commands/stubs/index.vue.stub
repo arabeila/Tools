@@ -57,7 +57,7 @@
                 selection:[],
             };
         },
-        computed(){
+        computed:{
             deleteStatus(){
                 return !this.selection.length;
             },
@@ -81,6 +81,7 @@
             },
             handleReload(){
                 this.clear();
+
                 this.getData();
             },
             handleRefresh(){
@@ -118,6 +119,12 @@
                     total:0,
                     title:null,
                 };
+            },
+            notice(res){
+                this.$Notice[res.code ===200?'success':'error']({
+                    title:res.msg,
+                    desc:res.code ===200?'':'请重试',
+                });
             },
         },
     };
