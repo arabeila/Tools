@@ -16,7 +16,7 @@ use Prettus\Repository\Generators\FileAlreadyExistsException;
 
 class CreateTemplate extends Command
 {
-    protected $signature = 'create:template {path} {--m|model=} {--api} {--vue}';
+    protected $signature = 'create:template {path} {--m|model=} {--api} {--vue} {--category}';
 
     protected $description = 'Create template';
 
@@ -132,12 +132,18 @@ class CreateTemplate extends Command
     {
         $stub = '\stubs\{method}.stub';
 
-        if ($this->option('vue')) {
-            $stub = str_replace('.stub', '.vue.stub', $stub);
+        if ($this->option('category')) {
+            $stub = str_replace('.stub', '.category.stub', $stub);
 
-            if ($this->option('api')) {
-                //todo 不加载 create edit
-                $stub = str_replace('.stub', '.api.stub', $stub);
+        } else {
+            if ($this->option('vue')) {
+                $stub = str_replace('.stub', '.vue.stub', $stub);
+
+                if ($this->option('api')) {
+                    //todo 不加载 create edit
+                    $stub = str_replace('.stub', '.api.stub', $stub);
+                }
+
             }
 
         }

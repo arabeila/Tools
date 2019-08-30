@@ -20,4 +20,7 @@ return [
     'guards'    => [
         'auth:api',
     ],
+    'category'  => [
+        'refresh' => 1, // 分类清除缓存
+    ]
 ];

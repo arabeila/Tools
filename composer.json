@@ -5,12 +5,25 @@
   "license": "MIT",
   "minimum-stability": "dev",
   "require": {
-    "php": ">=7"
+    "php": ">=7",
+    "akaunting/setting": "^1.0",
+    "maatwebsite/excel": "^2.1.0",
+    "telstatic/rakan": "^2.2.1",
+    "spatie/laravel-permission": "^2.12"
+  },
+  "require-dev": {
+    "phpmd/phpmd": "^2.6",
+    "phpunit/phpunit": "^7.5",
+    "sebastian/phpcpd": "^4.1",
+    "squizlabs/php_codesniffer": "^3.4"
   },
   "autoload": {
     "psr-4": {
       "Arabeila\\Tools\\": "src/"
-    }
+    },
+    "files":[
+      "src/Helper/helpers.php"
+    ]
   },
   "extra": {
     "laravel": {

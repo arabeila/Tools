@@ -1,8 +1,9 @@
 <?php
 
-namespace Arabeila\Tools;
+namespace Arabeila\Tools\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 
 class AppRelease extends Command
 {
@@ -20,42 +21,6 @@ class AppRelease extends Command
     }
 
     public function handle()
-    {
-
-        xenv($data);
-
-        $this->info(env('APP_NAME').' 版本发布助手 '.$guard);
-        $this->info('当前发布版本为 '.$version);
-
-        if (env('APP_ENV') !== 'local') {
-            exit('env环境修改成功!'.PHP_EOL);
-        }
-
-        $this->info('文件编译中!');
-
-        exec('npm run prod-'.strtolower($guard));
-
-        $directory = 'js/'.strtolower($guard).'/'.$version;
-
-        $file_online = $directory.'/app.js';
-
-        $file_local = 'public/js/'.strtolower($guard).'.js';
-
-        $this->info('文件上传中!');
-
-        Storage::disk('oss')->put($file_online, file_get_contents($file_local));
-
-        if (Storage::disk('oss')->exists($file_online)) {
-            $this->info('文件上传成功!');
-        } else {
-            $this->error('文件上传失败!');
-        }
-    }
-
-    /**
-     * 更新 发布版本
-     */
-    public function changeVersion()
     {
         $guard = strtoupper($this->option('guard'));
 
@@ -88,41 +53,40 @@ class AppRelease extends Command
             $guard.'_JS' => $version,
         ];
 
+        xenv($data);
 
+        $this->info(config('app.name').' 版本发布助手 '.$guard);
+        $this->info('当前发布版本为 '.$version);
 
+        if (config('app.env') !== 'local') {
+            exit('env环境修改成功!'.PHP_EOL);
+        }
+
+        $this->info('文件编译中!');
+
+        exec('npm run prod-'.strtolower($guard));
+
+        $directory = 'js/'.strtolower($guard).'/'.$version;
+
+        $fileOnline = $directory.'/app.js';
+
+        $fileLocal = 'public/js/'.strtolower($guard).'.js';
+
+        $this->info('文件上传中!');
+
+        Storage::disk('oss')->put($fileOnline, file_get_contents($fileLocal));
+
+        if (Storage::disk('oss')->exists($fileOnline)) {
+            $this->info('文件上传成功!');
+            Storage::disk('oss')->put('js/'.strtolower($guard).'/current/version', $version);
+
+            if (Storage::disk('oss')->symlink('js/'.strtolower($guard).'/current/app.js', $fileOnline)) {
+                $this->info('软链接设置成功!');
+            } else {
+                $this->info('软链接设置失败!');
+            }
+        } else {
+            $this->error('文件上传失败!');
+        }
     }
-
-    /**
-     * 编译文件
-     */
-    public function build()
-    {
-
-    }
-
-    /**
-     * 上传文件
-     */
-    public function upload()
-    {
-
-    }
-
-    /**
-     * 获取线上文件路径
-     */
-    public function getOnlineFile()
-    {
-
-    }
-
-    /**
-     * 获取本地文件路径
-     */
-    public function getLocalFile()
-    {
-
-    }
-
-
 }
