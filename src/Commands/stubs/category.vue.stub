@@ -139,7 +139,7 @@
             getData() {
                 this.visible = false;
 
-                this.$admin.getCategories().then(res => {
+                this.$admin.getDummyCategories().then(res => {
                     this.data = res;
 
                     this.data.forEach(function ($item) {
@@ -184,13 +184,13 @@
                 this.$refs.categoryForm.validate((valid) => {
                     if (valid) {
                         if (this.form.id) {
-                            this.$admin.putCategory(this.form).then(res => {
+                            this.$admin.putDummyCategory(this.form).then(res => {
                                 this.notice(res);
 
                                 this.getData();
                             });
                         } else {
-                            this.$admin.postCategory(this.form).then(res => {
+                            this.$admin.postDummyCategory(this.form).then(res => {
                                 this.notice(res);
 
                                 this.getData();
@@ -209,7 +209,7 @@
                     id: row.id,
                 };
 
-                this.$admin.delCategory(form).then(res => {
+                this.$admin.delDummyCategory(form).then(res => {
                     this.notice(res);
 
                     this.getData();
