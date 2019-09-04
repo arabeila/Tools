@@ -11,11 +11,11 @@ namespace Arabeila\Tools\Services;
 
 class MarkdownService
 {
-    public function index()
+    public function index($namespace = null)
     {
         $service = new PostmanService();
 
-        $json = $service->index();
+        $json = $service->index($namespace);
 
         $fileName = date('Y-m-d H:i:s').'_Api.md';
 
@@ -59,6 +59,24 @@ class MarkdownService
 
                 echo '* 请求方式 '.'`'.$val['request']['method'].'`';
                 echo PHP_EOL;
+
+                if (!empty($val['request']['header'])) {
+                    echo '* 请求头';
+                    echo PHP_EOL;
+
+                    if ($val['request']['header']) {
+                        echo '|   名称    |  类型  | 必填 | 默认值 |  备注  |';
+                        echo PHP_EOL;
+
+                        echo '| :-------: | :----: | :--: | :----: | :----: |';
+                        echo PHP_EOL;
+
+                        foreach ($val['request']['header'] as $param) {
+                            echo "|   {$param['key']}    |  {$param['type']}  | {$param['require']} | {$param['value']} |  {$param['description']}  |";
+                            echo PHP_EOL;
+                        }
+                    }
+                }
 
                 echo '* 请求参数';
                 echo PHP_EOL;

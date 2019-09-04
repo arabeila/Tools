@@ -21,7 +21,7 @@ class Help
     public static function reply($bool, $msg = '')
     {
         return response()->json([
-            'code' => $bool ? 300 : 500,
+            'code' => $bool ? 200 : 500,
             'msg'  => $msg,
         ]);
     }

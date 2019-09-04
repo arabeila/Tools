@@ -9,6 +9,7 @@
 namespace Arabeila\Tools\Services;
 
 use Illuminate\Support\Facades\Route;
+use Arabeila\Tools\Supports\Str;
 
 class PostmanService
 {
@@ -33,7 +34,7 @@ class PostmanService
         $routes = Route::getRoutes();
 
         foreach ($routes as $route) {
-            $arr = array();
+            $arr = [];
             $actionName = $route->getActionName();
 
             preg_match('/\@/', $actionName, $end, PREG_OFFSET_CAPTURE);
@@ -54,58 +55,78 @@ class PostmanService
 
             $arr['method'] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
             $arr['uri'] = method_exists($route, 'getPath') ? $route->getPath() : $route->uri;
-            array_push($this->list, $arr);
+
+            $arr['auth'] = false;
+
+            foreach ($route->gatherMiddleware() as $item) {
+                if (in_array($item, config('tools.guards'))) {
+                    $arr['auth'] = true;
+                }
+            }
+
+            if (!isset($this->list[$arr['controller']])) {
+                $this->list[$arr['controller']] = [
+                    $arr,
+                ];
+            } else {
+                array_push($this->list[$arr['controller']], $arr);
+            }
         }
     }
 
     /**
      * 返回控制器注释
      */
-    public function index()
+    public function index($namespce = null)
     {
         $data['info'] = [
-            '_postman_id' => '1111',
-            'name'        => 'Permission',
+            '_postman_id' => '',
+            'name'        => config('app.name').' 接口文档',
             'schema'      => 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
         ];
+
         $data['item'] = [];
 
         $res = [];
 
         $num = 0;
 
-        for ($i = 0; $i < count($this->list); $i++) {
-            $class = $this->list[$i]['controller'];
-
-            if(in_array($class,$res)){
+        foreach ($this->list as $key => $item) {
+            if (!(!is_null($namespce) && Str::start_with($key, 'App\\Http\\Controllers\\'.$namespce))) {
                 continue;
             }
+            foreach ($item as $value) {
+                $class = $value['controller'];
+                if (in_array($class, $res)) {
+                    continue;
+                }
 
-            array_push($res,$class);
+                array_push($res, $class);
 
-            $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
+                $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
 
-            $reflection = new \ReflectionClass($class);
+                $reflection = new \ReflectionClass($class);
 
-            $actions = $this->getActions($class);
+                $actions = $this->getActions($class);
 
 
-            switch (count($className)) {
-                case 1:
-                    //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
-                    break;
-                case 2:
-                    $data['item'][$num++] = [
-                        'name' => $this->getClassDoc($reflection),
-                        'item' => $this->getActionDoc($actions, $reflection, $className[0]),
-                    ];
-                    break;
-                case 3:
-                    $data['item'][$num++] = [
-                        'name' => $this->getClassDoc($reflection),
-                        'item' => $this->getActionDoc($actions, $reflection, $className[0]),
-                    ];
-                    break;
+                switch (count($className)) {
+                    case 1:
+                        //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
+                        break;
+                    case 2:
+                        $data['item'][$num++] = [
+                            'name' => $this->getClassDoc($reflection),
+                            'item' => $this->getActionDoc($actions, $reflection, $className[0]),
+                        ];
+                        break;
+                    case 3:
+                        $data['item'][$num++] = [
+                            'name' => $this->getClassDoc($reflection),
+                            'item' => $this->getActionDoc($actions, $reflection, $className[0]),
+                        ];
+                        break;
+                }
             }
         }
         return $data;
@@ -116,7 +137,7 @@ class PostmanService
      */
     public function getPermissions($guard = "Admin")
     {
-        if(!isset($this->permissions[$guard])){
+        if (!isset($this->permissions[$guard])) {
             $this->permissions[$guard] = [];
         }
 
@@ -144,11 +165,11 @@ class PostmanService
     public function getActions($controller)
     {
         $obj = [];
-        foreach ($this->list as $value) {
-            if ($value['controller'] == $controller) {
-                $obj[] = $value['action'];
-            }
+
+        foreach ($this->list[$controller] as $value) {
+            $obj[] = $value['action'];
         }
+
         return $obj;
     }
 
@@ -157,11 +178,12 @@ class PostmanService
      */
     public function getRequestUrl($controller, $action)
     {
-        foreach ($this->list as $one) {
-            if ($one['controller'] == $controller && $one['action'] == $action) {
-                return $one['uri'];
+        foreach ($this->list[$controller] as $item) {
+            if ($item['action'] == $action) {
+                return $item['uri'];
             }
         }
+
         return null;
     }
 
@@ -170,13 +192,39 @@ class PostmanService
      */
     public function getRequestMethod($controller, $action)
     {
-        foreach ($this->list as $one) {
-
-            if ($one['controller'] == $controller && $one['action'] == $action) {
-                return $one['method'];
+        foreach ($this->list[$controller] as $item) {
+            if ($item['action'] == $action) {
+                return $item['method'];
             }
         }
+
         return null;
+    }
+
+    /**
+     * 获取请求头
+     */
+    public function getRequestHeader($controller, $action)
+    {
+        foreach ($this->list[$controller] as $item) {
+            if ($item['action'] == $action) {
+                if ($item['auth']) {
+                    return [
+                        [
+                            'type'        => 'string',
+                            'key'         => 'access-token',
+                            'require'     => 'yes',
+                            'value'       => '{{AccessToken}}',
+                            'description' => ' ',
+                        ]
+                    ];
+                } else {
+                    return [];
+                }
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -206,7 +254,7 @@ class PostmanService
     public function formatClassDoc($doc)
     {
         if (!$doc) {
-            return "";
+            return '';
         }
 
         if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
@@ -218,7 +266,6 @@ class PostmanService
         }
 
         $title = $this->formatTitle($lines[1]);
-//        $desc = $this->formatDesc($lines[1]);
 
         return $title;
     }
@@ -226,7 +273,7 @@ class PostmanService
     /**
      * 格式化注释代码
      */
-    public function formatDoc($doc, $reflection, $property, $nameSpace)
+    public function formatDoc($doc, $reflection, $property)
     {
         if (!$doc) {
             return [
@@ -234,9 +281,11 @@ class PostmanService
                 'header'      => [],
                 'body'        => null,
                 'url'         => null,
-                'description' => " ",
+                'description' => ' ',
             ];
         }
+        $controller = $reflection->getName();
+        $header = $this->getRequestHeader($controller, $property->getName());
 
         if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
             return [];
@@ -245,16 +294,12 @@ class PostmanService
         if (preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
             return [];
         }
-        $controller = $reflection->getName();
+
         $method = $this->getRequestMethod($controller, $property->getName());
         $uri = $this->getRequestUrl($controller, $property->getName());
 
         $var = $this->formatVar($lines[1]);
-
-        $body = [
-            "mode"     => "formdata",
-            "formdata" => $var,
-        ];
+        $desc = $this->formatDesc($lines[1]);
 
         $url = [
             "raw"  => "{{url}}/".$uri,
@@ -264,13 +309,31 @@ class PostmanService
             "path" => explode('/', $uri),
         ];
 
-        return [
-            'method'      => $method,
-            'header'      => [],
-            'body'        => $body,
-            'url'         => $url,
-            'description' => " ",
-        ];
+        if ($method == 'GET') {
+            if ($var) {
+                $url['query'] = $var;
+            }
+
+            return [
+                'method'      => $method,
+                'header'      => $header,
+                'url'         => $url,
+                'description' => $desc,
+            ];
+        } else {
+            $body = [
+                "mode"     => "formdata",
+                "formdata" => $var,
+            ];
+
+            return [
+                'method'      => $method,
+                'header'      => $header,
+                'body'        => $body,
+                'url'         => $url,
+                'description' => $desc,
+            ];
+        }
     }
 
     /**
@@ -291,12 +354,11 @@ class PostmanService
     public function formatDesc($lines)
     {
         $reg = '/@desc.*/i';
-        $desc = [];
-
+        $desc = null;
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false)
                 if (!empty($tmp)) {
-                    $desc[] = trim(str_replace('@desc', "", $tmp[0]));
+                    $desc = trim(str_replace('@desc', "", $tmp[0]));
                 }
         }
 
