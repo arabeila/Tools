@@ -4,6 +4,7 @@ namespace Arabeila\Tools\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use App\User;
 
 class ResetPassword extends Command
 {
@@ -25,12 +26,14 @@ class ResetPassword extends Command
 
     protected $phone;
 
+    protected $user;
+
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct($user)
+    public function __construct(User $user)
     {
         $this->model = $user;
 

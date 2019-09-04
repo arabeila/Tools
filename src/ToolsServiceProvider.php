@@ -8,10 +8,17 @@
 
 namespace Arabeila\Tools;
 
+use Arabeila\Tools\Commands\AppRelease;
+use Arabeila\Tools\Commands\CodeDetector;
+use Arabeila\Tools\Commands\CodeStyleCheck;
+use Arabeila\Tools\Commands\CodeStyleRepair;
 use Arabeila\Tools\Commands\CreateController;
 use Arabeila\Tools\Commands\CreateModel;
+use Arabeila\Tools\Commands\CreatePermissions;
 use Arabeila\Tools\Commands\CreateRequest;
 use Arabeila\Tools\Commands\CreateTemplate;
+use Arabeila\Tools\Commands\RefreshNacosConfig;
+use Arabeila\Tools\Commands\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
 class ToolsServiceProvider extends ServiceProvider
@@ -35,6 +42,13 @@ class ToolsServiceProvider extends ServiceProvider
                 CreateController::class,
                 CreateRequest::class,
                 CreateTemplate::class,
+                AppRelease::class,
+                CodeDetector::class,
+                CodeStyleCheck::class,
+                CodeStyleRepair::class,
+                CreatePermissions::class,
+                RefreshNacosConfig::class,
+                ResetPassword::class,
             ]);
         }
     }
