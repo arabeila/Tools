@@ -12,6 +12,12 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class CategoryService
 {
+    protected $firstKey = 'first';
+
+    protected $secondKey = 'second';
+
+    protected $thirdKey = 'third';
+
     protected $titles = [
         'first'  => '一级类目',
         'second' => '二级类目',
@@ -35,23 +41,23 @@ class CategoryService
             $second = [];
 
             foreach ($data as $datum) {
-                if (isset($first[$datum[$this->titles['first']]])) {
-                    if (!in_array($datum[$this->titles['second']], $first[$datum[$this->titles['first']]])) {
-                        array_push($first[$datum[$this->titles['first']]], $datum[$this->titles['second']]);
+                if (isset($first[$datum[$this->titles[$this->firstKey]]])) {
+                    if (!in_array($datum[$this->titles[$this->secondKey]], $first[$datum[$this->titles[$this->firstKey]]])) {
+                        array_push($first[$datum[$this->titles[$this->firstKey]]], $datum[$this->titles[$this->secondKey]]);
                     }
                 } else {
-                    $first[$datum[$this->titles['first']]] = [
-                        $datum[$this->titles['second']],
+                    $first[$datum[$this->titles[$this->firstKey]]] = [
+                        $datum[$this->titles[$this->secondKey]],
                     ];
                 }
             }
 
             foreach ($data as $datum) {
-                if (isset($second[$datum[$this->titles['second']]])) {
-                    array_push($second[$datum[$this->titles['second']]], $datum[$this->titles['third']]);
+                if (isset($second[$datum[$this->titles[$this->secondKey]]])) {
+                    array_push($second[$datum[$this->titles[$this->secondKey]]], $datum[$this->titles[$this->thirdKey]]);
                 } else {
-                    $second[$datum[$this->titles['second']]] = [
-                        $datum[$this->titles['third']],
+                    $second[$datum[$this->titles[$this->secondKey]]] = [
+                        $datum[$this->titles[$this->thirdKey]],
                     ];
                 }
             }

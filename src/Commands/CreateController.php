@@ -26,11 +26,17 @@ class CreateController extends ControllerMakeCommand
 
     protected $dummyModelName;
 
+    protected $model = 'model';
+
+    protected $requestSuffix;
+
     protected $time = 1;        //多次 调用call bug 临时补丁
 
     public function handle()
     {
         $this->dummyModelName = 'Placeholder';
+
+        $this->requestSuffix = 'Request';
 
         return parent::handle();
     }
@@ -39,7 +45,7 @@ class CreateController extends ControllerMakeCommand
     {
         $stub = null;
 
-        if ($this->option('model')) {
+        if ($this->option($this->model)) {
             $stub = '/stubs/controller.model.stub';
         } else {
             $stub = '/stubs/controller.stub';
@@ -64,24 +70,16 @@ class CreateController extends ControllerMakeCommand
 
     protected function buildModelReplacements(array $replace)
     {
-        $modelClass = $this->parseModel($this->option('model'));
+        $modelClass = $this->parseModel($this->option($this->model));
 
-        if (!class_exists($modelClass)) {
-            if ($this->time++ < 3) {
-                if ($this->confirm("A {$modelClass} model does not exist. Do you want to generate it?", true)) {
-                    $this->call('make:model', ['name' => $modelClass]);
-                }
-            }
+        if (!class_exists($modelClass) && $this->time++ < 3 && ($this->confirm("A {$modelClass} model does not exist. Do you want to generate it?", true))) {
+            $this->call('make:model', ['name' => $modelClass]);
         }
 
-        $requestClass = $this->parseRequest('App\\Http\Requests\\'.class_basename($modelClass).'Request');
+        $requestClass = $this->parseRequest('App\\Http\Requests\\'.class_basename($modelClass).$this->requestSuffix);
 
-        if (!class_exists($requestClass)) {
-            if ($this->time++ < 3) {
-                if ($this->confirm("A {$requestClass} request does not exist. Do you want to generate it?", true)) {
-                    $this->call('create:request', ['name' => $requestClass]);
-                }
-            }
+        if (!class_exists($requestClass) && $this->time++ < 3 && ($this->confirm("A {$requestClass} request does not exist. Do you want to generate it?", true))) {
+            $this->call('create:request', ['name' => $requestClass]);
         }
 
         return array_merge($replace, [
@@ -90,8 +88,8 @@ class CreateController extends ControllerMakeCommand
             'DummyModelVariable'        => lcfirst(class_basename($modelClass)),
             'DummyModelPluralLowerCase' => str_plural(lcfirst(class_basename($modelClass))),
             'DummyModelName'            => $this->dummyModelName,
-            'DummyRequest'              => class_basename($modelClass).'Request',
-            'DummyFullRequestClass'     => 'App\\Http\Requests\\'.class_basename($modelClass).'Request',
+            'DummyRequest'              => class_basename($modelClass).$this->requestSuffix,
+            'DummyFullRequestClass'     => 'App\\Http\Requests\\'.class_basename($modelClass).$this->requestSuffix,
             'DummyBladePath'            => end($this->suffix).'.'.lcfirst(class_basename($modelClass)),
         ]);
     }
@@ -104,7 +102,7 @@ class CreateController extends ControllerMakeCommand
 
         $replace = [];
 
-        if ($this->option('model')) {
+        if ($this->option($this->model)) {
             $replace = $this->buildModelReplacements($replace);
         }
 

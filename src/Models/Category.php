@@ -8,6 +8,14 @@ class Category extends Model
 {
     protected $guarded = [];
 
+    const IS_SHOW_ACTIVATE = 1;
+    const IS_SHOW_DEACTIVATE = 2;
+
+    public static $isShowMap = [
+        self::IS_SHOW_ACTIVATE   => '显示',
+        self::IS_SHOW_DEACTIVATE => '隐藏',
+    ];
+
     protected $casts = [
         'is_directory' => 'boolean',
     ];
@@ -53,19 +61,19 @@ class Category extends Model
     // 获取分类 id
     public function getKeyAttribute()
     {
-        return $this->id;
+        $this->getValueAttribute();
     }
 
     // 获取分类显示状态
     public function getDisabledAttribute()
     {
-        return $this->if_show === 1 ? false : true;
+        return !$this->is_show === 1;
     }
 
     // 获取分类层级
     public function getExpandAttribute()
     {
-        return $this->level == 1 ? true : false;
+        return $this->level === 1;
     }
 
     // 获取父级分类
@@ -77,7 +85,7 @@ class Category extends Model
     // 获取子分类
     public function child()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort');
+        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort','desc');
     }
 
     // 获取所有子分类
@@ -89,7 +97,7 @@ class Category extends Model
     // 获取显示中的子分类
     public function childShow()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort')->where('if_show', 1);
+        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort','desc')->where('is_show', 1);
     }
 
     // 获取所有子分类

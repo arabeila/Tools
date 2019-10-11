@@ -8,6 +8,7 @@
 
 namespace Arabeila\Tools\Services;
 
+use Arabeila\Tools\Supports\Str;
 use Illuminate\Support\Facades\Route;
 
 class PermissionService
@@ -17,6 +18,14 @@ class PermissionService
     public $permissions;
 
     public $blackList;
+
+    protected $controllerKey = 'controller';
+
+    protected $actionKey = 'action';
+
+    protected $methodKey = 'method';
+
+    protected $titleKey = 'title';
 
     public function __construct()
     {
@@ -47,20 +56,20 @@ class PermissionService
                 continue;
             }
 
-            $arr['controller'] = $controller;
+            $arr[$this->controllerKey] = $controller;
 
             $action = substr($actionName, $end[0][1] + 1);
-            $arr['action'] = $action;
+            $arr[$this->actionKey] = $action;
 
-            $arr['method'] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
+            $arr[$this->methodKey] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
             $arr['uri'] = method_exists($route, 'getPath') ? $route->getPath() : $route->uri;
 
-            if (!isset($this->list[$arr['controller']])) {
-                $this->list[$arr['controller']] = [
+            if (!isset($this->list[$arr[$this->controllerKey]])) {
+                $this->list[$arr[$this->controllerKey]] = [
                     $arr,
                 ];
             } else {
-                array_push($this->list[$arr['controller']], $arr);
+                array_push($this->list[$arr[$this->controllerKey]], $arr);
             }
         }
     }
@@ -74,7 +83,7 @@ class PermissionService
 
         foreach ($this->list as $item) {
             foreach ($item as $value) {
-                $class = $value['controller'];
+                $class = $value[$this->controllerKey];
 
                 $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
 
@@ -83,8 +92,8 @@ class PermissionService
                 $actions = $this->getActions($class);
 
                 switch (count($className)) {
+                    default:
                     case 1:
-                        //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
                         break;
                     case 2:
                         $data[$className[0]][$className[0].'/'.$className[1]]['class'] = $this->getClassDoc($reflection);
@@ -113,10 +122,7 @@ class PermissionService
             $this->permissions[$guard] = [];
         }
 
-        $permissions = array_unique($this->permissions[$guard]);
-        sort($permissions);
-
-        return $permissions;
+        return sort(array_unique($this->permissions[$guard]));
     }
 
     /**
@@ -126,9 +132,7 @@ class PermissionService
     {
         $doc = $reflection->getDocComment();
 
-        $arr = $this->formatClassDoc($doc);
-
-        return $arr;
+        return $this->formatClassDoc($doc);
     }
 
     /**
@@ -139,7 +143,7 @@ class PermissionService
         $obj = [];
 
         foreach ($this->list[$controller] as $value) {
-            $obj[] = $value['action'];
+            $obj[] = $value[$this->actionKey];
         }
         return $obj;
     }
@@ -150,7 +154,7 @@ class PermissionService
     public function getRequestUrl($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item['action'] == $action) {
+            if ($item[$this->actionKey] == $action) {
                 return config('app.url').$item['uri'];
             }
         }
@@ -163,8 +167,8 @@ class PermissionService
     public function getRequestMethod($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item['action'] == $action) {
-                return $item['method'];
+            if ($item[$this->actionKey] == $action) {
+                return $item[$this->methodKey];
             }
         }
         return null;
@@ -178,9 +182,11 @@ class PermissionService
         $arr = [];
         $methods = $reflection->getMethods();
         $i = 0;
-        foreach ($methods as $key => $property) {
-            if (!in_array($property->getName(), $methodArray))
+        foreach ($methods as $property) {
+            if (!in_array($property->getName(), $methodArray)) {
                 continue;
+            }
+
             $doc = $property->getDocComment();
 
             $arr[$i]['name'] = $property->getName();
@@ -195,10 +201,10 @@ class PermissionService
             }
 
             array_push($this->permissions[$nameSpace], $arr[$i]['auth']);
-            $arr[$i]['method'] = $this->getRequestMethod($controller, $arr[$i]['name']);
+            $arr[$i][$this->methodKey] = $this->getRequestMethod($controller, $arr[$i]['name']);
             $arr[$i]['_expanded'] = true;
 
-            $arr[$i]['doc'] = $this->formatDoc($doc, $nameSpace);
+            $arr[$i]['doc'] = $this->formatDoc($doc);
 
             $i++;
         }
@@ -212,19 +218,14 @@ class PermissionService
     {
         if (!$doc) {
             return [
-                'title' => null,
-                'check' => false,
-                'desc'  => [],
+                $this->titleKey => null,
+                'check'         => false,
+                'desc'          => [],
             ];
         }
 
-        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
-            return [];
-        }
-
-        list($doc) = preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines);
-
-        if ($doc === false) {
+        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false
+            || preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
             return [];
         }
 
@@ -232,33 +233,29 @@ class PermissionService
         $desc = $this->formatDesc($lines[1]);
 
         return [
-            'title' => $title,
-            'check' => false,
-            'desc'  => $desc,
+            $this->titleKey => $title,
+            'check'         => false,
+            'desc'          => $desc,
         ];
     }
 
     /**
      * 格式化注释代码
      */
-    public function formatDoc($doc, $nameSpace)
+    public function formatDoc($doc)
     {
         if (!$doc) {
             return [
-                'title'   => null,
-                'desc'    => [],
-                'params'  => null,
-                'returns' => null
+                $this->titleKey => null,
+                'desc'          => [],
+                'params'        => null,
+                'returns'       => null
             ];
         }
 
-        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
-            return [];
-        }
+        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false
+            || preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
 
-        list($doc) = preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines);
-
-        if ($doc === false) {
             return [];
         }
 
@@ -268,10 +265,10 @@ class PermissionService
         $return = $this->formatReturn($lines[1]);
 
         return [
-            'title'   => $title,
-            'desc'    => $desc,
-            'params'  => $params,
-            'returns' => $return
+            $this->titleKey => $title,
+            'desc'          => $desc,
+            'params'        => $params,
+            'returns'       => $return
         ];
     }
 
@@ -295,11 +292,10 @@ class PermissionService
         $reg = '/@desc.*/i';
         $desc = [];
 
-        foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false)
-                if (!empty($tmp)) {
-                    $desc[] = trim(str_replace('@desc', "", $tmp[0]));
-                }
+        foreach ($lines as $line) {
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
+                $desc[] = trim(str_replace('@desc', "", $tmp[0]));
+            }
         }
 
         return $desc;
@@ -316,16 +312,21 @@ class PermissionService
         $params = [];
 
         foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false) {
-                if (!empty($tmp)) {
-                    list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
+                list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+
+                if (Str::start_with($type, '$')) {
+                    $params[$k]['type'] = $name;
+                    $params[$k]['name'] = $type;
+                } else {
                     $params[$k]['type'] = $type;
                     $params[$k]['name'] = $name;
-                    $params[$k]['require'] = $require;
-                    $params[$k]['default'] = $default;
-                    $params[$k]['comment'] = $comment;
                 }
+
+                $params[$k]['require'] = $require;
+                $params[$k]['default'] = $default;
+                $params[$k]['comment'] = $comment;
             }
         }
 
@@ -342,13 +343,10 @@ class PermissionService
         $return = [];
 
         foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false) {
-                if (!empty($tmp)) {
-                    list($self_type) = explode(' ',trim(str_replace('@return',"",$tmp[0])));
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
+                list($self_type) = explode(' ', trim(str_replace('@return', "", $tmp[0])));
 
-                    $return[$k]['self_type']  = $self_type;
-//                    $return[$k]['data_type']  = ;
-                }
+                $return[$k]['self_type'] = $self_type;
             }
         }
 

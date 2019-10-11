@@ -21,16 +21,6 @@ class CodeStyleCheck extends Command
     protected $description = '代码风格检查';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

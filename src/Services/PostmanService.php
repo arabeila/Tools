@@ -19,6 +19,16 @@ class PostmanService
 
     public $blackList;
 
+    protected $controllerKey = 'controller';
+
+    protected $actionKey = 'action';
+
+    protected $methodKey = 'method';
+
+    protected $description = 'description';
+
+    protected $header = 'header';
+
     public function __construct()
     {
         $this->blackList = config('tools.blackList');
@@ -48,12 +58,12 @@ class PostmanService
                 continue;
             }
 
-            $arr['controller'] = $controller;
+            $arr[$this->controllerKey] = $controller;
 
             $action = substr($actionName, $end[0][1] + 1);
-            $arr['action'] = $action;
+            $arr[$this->actionKey] = $action;
 
-            $arr['method'] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
+            $arr[$this->methodKey] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
             $arr['uri'] = method_exists($route, 'getPath') ? $route->getPath() : $route->uri;
 
             $arr['auth'] = false;
@@ -64,12 +74,12 @@ class PostmanService
                 }
             }
 
-            if (!isset($this->list[$arr['controller']])) {
-                $this->list[$arr['controller']] = [
+            if (!isset($this->list[$arr[$this->controllerKey]])) {
+                $this->list[$arr[$this->controllerKey]] = [
                     $arr,
                 ];
             } else {
-                array_push($this->list[$arr['controller']], $arr);
+                array_push($this->list[$arr[$this->controllerKey]], $arr);
             }
         }
     }
@@ -96,7 +106,7 @@ class PostmanService
                 continue;
             }
             foreach ($item as $value) {
-                $class = $value['controller'];
+                $class = $value[$this->controllerKey];
                 if (in_array($class, $res)) {
                     continue;
                 }
@@ -111,15 +121,10 @@ class PostmanService
 
 
                 switch (count($className)) {
+                    default:
                     case 1:
-                        //$data['/'][$className[0]] = $this->getActionDoc($actions, $reflection);
                         break;
                     case 2:
-                        $data['item'][$num++] = [
-                            'name' => $this->getClassDoc($reflection),
-                            'item' => $this->getActionDoc($actions, $reflection, $className[0]),
-                        ];
-                        break;
                     case 3:
                         $data['item'][$num++] = [
                             'name' => $this->getClassDoc($reflection),
@@ -141,10 +146,7 @@ class PostmanService
             $this->permissions[$guard] = [];
         }
 
-        $permissions = array_unique($this->permissions[$guard]);
-        sort($permissions);
-
-        return $permissions;
+        return sort(array_unique($this->permissions[$guard]));
     }
 
     /**
@@ -154,9 +156,7 @@ class PostmanService
     {
         $doc = $reflection->getDocComment();
 
-        $arr = $this->formatClassDoc($doc);
-
-        return $arr;
+        return $this->formatClassDoc($doc);
     }
 
     /**
@@ -167,7 +167,7 @@ class PostmanService
         $obj = [];
 
         foreach ($this->list[$controller] as $value) {
-            $obj[] = $value['action'];
+            $obj[] = $value[$this->actionKey];
         }
 
         return $obj;
@@ -179,7 +179,7 @@ class PostmanService
     public function getRequestUrl($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item['action'] == $action) {
+            if ($item[$this->actionKey] == $action) {
                 return $item['uri'];
             }
         }
@@ -193,8 +193,8 @@ class PostmanService
     public function getRequestMethod($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item['action'] == $action) {
-                return $item['method'];
+            if ($item[$this->actionKey] == $action) {
+                return $item[$this->methodKey];
             }
         }
 
@@ -207,15 +207,15 @@ class PostmanService
     public function getRequestHeader($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item['action'] == $action) {
+            if ($item[$this->actionKey] == $action) {
                 if ($item['auth']) {
                     return [
                         [
-                            'type'        => 'string',
-                            'key'         => 'access-token',
-                            'require'     => 'yes',
-                            'value'       => '{{AccessToken}}',
-                            'description' => ' ',
+                            'type'             => 'string',
+                            'key'              => 'access-token',
+                            'require'          => 'yes',
+                            'value'            => '{{AccessToken}}',
+                            $this->description => ' ',
                         ]
                     ];
                 } else {
@@ -235,9 +235,11 @@ class PostmanService
         $arr = [];
         $methods = $reflection->getMethods();
         $i = 0;
-        foreach ($methods as $key => $property) {
-            if (!in_array($property->getName(), $methodArray))
+        foreach ($methods as $property) {
+            if (!in_array($property->getName(), $methodArray)) {
                 continue;
+            }
+
             $doc = $property->getDocComment();
             $arr[$i]['name'] = $this->formatClassDoc($doc);
             $arr[$i]['request'] = $this->formatDoc($doc, $reflection, $property, $nameSpace);
@@ -257,17 +259,11 @@ class PostmanService
             return '';
         }
 
-        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
+        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false || preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
             return [];
         }
 
-        if (preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
-            return [];
-        }
-
-        $title = $this->formatTitle($lines[1]);
-
-        return $title;
+        return $this->formatTitle($lines[1]);
     }
 
     /**
@@ -277,21 +273,17 @@ class PostmanService
     {
         if (!$doc) {
             return [
-                'method'      => null,
-                'header'      => [],
-                'body'        => null,
-                'url'         => null,
-                'description' => ' ',
+                $this->methodKey   => null,
+                $this->header      => [],
+                'body'             => null,
+                'url'              => null,
+                $this->description => ' ',
             ];
         }
         $controller = $reflection->getName();
         $header = $this->getRequestHeader($controller, $property->getName());
 
-        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false) {
-            return [];
-        }
-
-        if (preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
+        if (preg_match('#^/\*\*(.*)\*/#s', $doc, $comment) === false || preg_match_all('#^\s*\*(.*)#m', trim($comment[1]), $lines) === false) {
             return [];
         }
 
@@ -315,10 +307,10 @@ class PostmanService
             }
 
             return [
-                'method'      => $method,
-                'header'      => $header,
-                'url'         => $url,
-                'description' => $desc,
+                $this->methodKey   => $method,
+                $this->header      => $header,
+                'url'              => $url,
+                $this->description => $desc,
             ];
         } else {
             $body = [
@@ -327,11 +319,11 @@ class PostmanService
             ];
 
             return [
-                'method'      => $method,
-                'header'      => $header,
-                'body'        => $body,
-                'url'         => $url,
-                'description' => $desc,
+                $this->methodKey   => $method,
+                $this->header      => $header,
+                'body'             => $body,
+                'url'              => $url,
+                $this->description => $desc,
             ];
         }
     }
@@ -355,11 +347,11 @@ class PostmanService
     {
         $reg = '/@desc.*/i';
         $desc = null;
-        foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false)
-                if (!empty($tmp)) {
-                    $desc = trim(str_replace('@desc', "", $tmp[0]));
-                }
+        foreach ($lines as $line) {
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
+
+                $desc = trim(str_replace('@desc', "", $tmp[0]));
+            }
         }
 
         return $desc;
@@ -376,18 +368,23 @@ class PostmanService
         $var = [];
 
         foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false)
-                if (!empty($tmp)) {
-                    $temp = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
-                    if (count($temp) == 5) {
+                $temp = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+
+                if (count($temp) == 5) {
+                    if (Str::start_with($temp[0], '$')) {
+                        $var[$k]['type'] = $temp[1];
+                        $var[$k]['key'] = $temp[0];
+                    } else {
                         $var[$k]['type'] = $temp[0];
                         $var[$k]['key'] = $temp[1];
-                        $var[$k]['require'] = $temp[2];
-                        $var[$k]['value'] = $temp[3];
-                        $var[$k]['description'] = $temp[4];
                     }
+                    $var[$k]['require'] = $temp[2];
+                    $var[$k]['value'] = $temp[3];
+                    $var[$k][$this->description] = $temp[4];
                 }
+            }
         }
 
         sort($var);
@@ -403,13 +400,11 @@ class PostmanService
         $return = [];
 
         foreach ($lines as $k => $line) {
-            if (preg_match($reg, trim($line), $tmp) !== false) {
-                if (!empty($tmp)) {
-                    $temp = explode(' ', trim(str_replace('@return', "", $tmp[0])));
-                    if (count($temp) == 2) {
-                        $return[$k]['self_type'] = $temp[0];
-                        $return[$k]['data_type'] = $temp[1];
-                    }
+            if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
+                $temp = explode(' ', trim(str_replace('@return', "", $tmp[0])));
+                if (count($temp) == 2) {
+                    $return[$k]['self_type'] = $temp[0];
+                    $return[$k]['data_type'] = $temp[1];
                 }
             }
         }
