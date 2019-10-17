@@ -14,11 +14,21 @@ use App\Http\Controllers\Controller;
  */
 class CategoryController extends Controller
 {
+    protected $model;
     protected $key;
+    protected $title;
+    protected $path;
 
-    public function __construct($key = "category")
+    protected $is_show = 'is_show';
+
+    protected $parent_id = 'parent_id';
+
+    public function __construct($model, $key, $title, $path = '')
     {
+        $this->model = $model;
         $this->key = strtolower($key);
+        $this->title = $title;
+        $this->path = $path;
     }
 
     /**
@@ -32,16 +42,22 @@ class CategoryController extends Controller
     }
 
     /**
-     * 参数
-     * @desc 参数
+     * 分类参数
+     * @desc 分类参数
+     * @param $request
+     * @var string $name yes null 分类名
+     * @var int $sort yes 0 排序
+     * @var int $is_show yes 1 是否显示
+     * @var int $parent_id yes 0 父级ID
+     * @return array
      */
     protected function getData(Request $request)
     {
         $data = [
             'name'         => $request->get('name'),
             'sort'         => $request->get('sort', 0),
-            'if_show'      => $request->get('if_show', 1),
-            'parent_id'    => $request->get('parent_id',0),
+            $this->is_show => $request->get('is_show', 1),
+            $this->parent_id    => $request->get('parent_id', 0),
             'is_directory' => false,
         ];
 
@@ -58,21 +74,23 @@ class CategoryController extends Controller
     }
 
     /**
-     * 分类一览
-     * @desc 分类一览
+     * 获取分类一览
+     * @desc 获取分类一览
+     * @param $request
+     * @return mixed
      */
     public function index(Request $request)
     {
         if (!$request->ajax()) {
-            return view('Admin.category.index');
+            return view($this->path);
         }
 
         $whiteList = $this->getWhiteList();
 
         if (empty($whiteList)) {
-            $categories = Category::where('parent_id', 0)->with('allChildren')->orderBy('sort')->get();
+            $categories = $this->model::where($this->parent_id, 0)->with('allChildren')->orderBy('sort', 'desc')->get();
         } else {
-            $categories = Category::whereIn('id', $whiteList)->where('parent_id', 0)->with('allChildren')->orderBy('sort')->get();
+            $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id, 0)->with('allChildren')->orderBy('sort', 'desc')->get();
         }
 
         return $categories;
@@ -92,9 +110,19 @@ class CategoryController extends Controller
             $whiteList = $this->getWhiteList();
 
             if (empty($whiteList)) {
-                $categories = Category::where('parent_id', 0)->with('children')->orderBy('sort')->get();
+                $categories = $this->model::where($this->parent_id, 0)->with('children')->orderBy('sort')->get();
             } else {
-                $categories = Category::whereIn('id', $whiteList)->where('parent_id', 0)->with('children')->orderBy('sort')->get();
+                $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id, 0)->with([
+                    'children'                   => function ($query) use ($whiteList) {
+                        $query->whereIn('id', $whiteList);
+                    },
+                    'children.children'          => function ($query) use ($whiteList) {
+                        $query->whereIn('id', $whiteList);
+                    },
+                    'children.children.children' => function ($query) use ($whiteList) {
+                        $query->whereIn('id', $whiteList);
+                    },
+                ])->orderBy('sort', 'desc')->get();
             }
 
             return $categories;
@@ -104,10 +132,16 @@ class CategoryController extends Controller
     /**
      * 添加分类
      * @desc 添加分类
+     * @param $request
+     * @var string $name yes null 分类名
+     * @var int $sort yes 0 排序
+     * @var int $is_show yes 1 是否显示
+     * @var int $parent_id yes 0 父级ID
+     * @return mixed
      */
     public function store(Request $request)
     {
-        $category = Category::create($this->getData($request));
+        $category = $this->model::create($this->getData($request));
 
         if ($category) {
             $this->refreshCache();
@@ -115,9 +149,9 @@ class CategoryController extends Controller
 
         $parent = null;
 
-        if ($request->filled('parent_id') && $category->parent_id != 0) {
+        if ($request->filled($this->parent_id) && $category->parent_id != 0) {
 
-            $parent = Category::findOrFail($category->parent_id);
+            $parent = $this->model::findOrFail($category->parent_id);
 
             $parent->is_directory = true;
 
@@ -130,37 +164,46 @@ class CategoryController extends Controller
 
         $bool = $category->save();
 
-        return Help::reply($bool, $bool ? '分类添加成功' : '分类添加失败');
+        return Help::reply($bool, $bool ? $this->title.'分类添加成功' : $this->title.'分类添加失败');
     }
 
     /**
      * 更新分类
      * @desc 更新分类
+     * @param $id
+     * @param $request
+     * @var string $name yes null 分类名
+     * @var int $sort yes 0 排序
+     * @var int $is_show yes 1 是否显示
+     * @return mixed
      */
     public function update($id, Request $request)
     {
-        $data = array_only($this->getData($request), ['name', 'sort', 'if_show']);
+        $data = array_only($this->getData($request), ['name', 'sort', $this->is_show]);
 
-        $bool = Category::where('id', $id)->update($data);
+        $bool = $this->model::where('id', $id)->update($data);
 
         if ($bool) {
             $this->refreshCache();
         }
 
-        return Help::reply($bool, $bool ? '分类修改成功' : '分类修改失败');
+        return Help::reply($bool, $bool ? $this->title.'分类修改成功' : $this->title.'分类修改失败');
     }
 
     /**
      * 删除分类
      * @desc 删除分类
+     * @param $id
+     * @var int $id yes null 分类ID
+     * @return mixed
      */
     public function destroy($id)
     {
         $this->refreshCache();
 
-        $bool = Category::destroy($id);
+        $bool = $this->model::destroy($id);
 
-        return Help::reply($bool, $bool ? '分类删除成功' : '分类删除失败');
+        return Help::reply($bool, $bool ? $this->title.'分类删除成功' : $this->title.'分类删除失败');
     }
 
     /**

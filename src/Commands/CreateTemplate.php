@@ -22,6 +22,12 @@ class CreateTemplate extends Command
 
     protected $type = 'Template';
 
+    protected $stub = '.stub';
+
+    protected $index = 'index';
+
+    protected $model = 'model';
+
     protected $files;
 
     public function __construct(Filesystem $files)
@@ -48,8 +54,6 @@ class CreateTemplate extends Command
             return false;
         }
 
-//        $this->makeDirectory($path);
-
         $this->buildClass($path, $name);
 
         $this->info($this->type.' created successfully.');
@@ -67,11 +71,11 @@ class CreateTemplate extends Command
         //API 仅有 index 方法
         if ($this->option('api')) {
             $stubFiles = [
-                'index',
+                $this->index,
             ];
         } else {
             $stubFiles = [
-                'index', 'create', 'edit',
+                $this->index, 'create', 'edit',
             ];
         }
 
@@ -80,7 +84,7 @@ class CreateTemplate extends Command
 
             $replace = [];
 
-            if ($this->option('model')) {
+            if ($this->option($this->model)) {
                 $replace = $this->buildModelReplacements($replace);
             }
 
@@ -89,7 +93,7 @@ class CreateTemplate extends Command
             );
 
             if (!File::exists(dirname($path))) {
-                mkdir(dirname($path));
+                mkdir(dirname($path),0777,true);
             }
 
             file_put_contents(str_replace('{method}', $stubFile, $path), $stub);
@@ -100,21 +104,21 @@ class CreateTemplate extends Command
     {
         if ($this->option('api')) {
             $stubFiles = [
-                'index',
+                $this->index,
             ];
         } else {
             $stubFiles = [
-                'index', 'create', 'edit',
+                $this->index, 'create', 'edit',
             ];
         }
 
         foreach ($stubFiles as $stubFile) {
             if ($this->option('vue')) {
-                if (!File::exists($rawName.'\\'.lcfirst(class_basename($this->option('model'))).'\\'.$stubFile.'.vue')) {
+                if (!File::exists($rawName.'\\'.lcfirst(class_basename($this->option($this->model))).'\\'.$stubFile.'.vue')) {
                     return false;
                 }
             } else {
-                if (!File::exists($rawName.'\\'.lcfirst(class_basename($this->option('model'))).'\\'.$stubFile.'.blade.php')) {
+                if (!File::exists($rawName.'\\'.lcfirst(class_basename($this->option($this->model))).'\\'.$stubFile.'.blade.php')) {
                     return false;
                 }
             }
@@ -133,15 +137,15 @@ class CreateTemplate extends Command
         $stub = '\stubs\{method}.stub';
 
         if ($this->option('category')) {
-            $stub = str_replace('.stub', '.category.stub', $stub);
+            $stub = str_replace($this->stub, '.category.stub', $stub);
 
         } else {
             if ($this->option('vue')) {
-                $stub = str_replace('.stub', '.vue.stub', $stub);
+                $stub = str_replace($this->stub, '.vue.stub', $stub);
 
                 if ($this->option('api')) {
-                    //todo 不加载 create edit
-                    $stub = str_replace('.stub', '.api.stub', $stub);
+
+                    $stub = str_replace($this->stub, '.api.stub', $stub);
                 }
 
             }
@@ -157,7 +161,7 @@ class CreateTemplate extends Command
 
     protected function buildModelReplacements(array $replace)
     {
-        $modelClass = $this->parseModel($this->option('model'));
+        $modelClass = $this->parseModel($this->option($this->model));
 
         return array_merge($replace, [
             'DummyModelVariable' => lcfirst(class_basename($modelClass)),
@@ -194,10 +198,10 @@ class CreateTemplate extends Command
         $path = str_replace('/', '\\', $path);
 
         if ($this->option('vue')) {
-            return $path.'\\'.lcfirst(class_basename($this->option('model'))).'\\'.'{method}.vue';
+            return $path.'\\'.lcfirst(class_basename($this->option($this->model))).'\\'.'{method}.vue';
         }
 
-        return $path.'\\'.lcfirst(class_basename($this->option('model'))).'\\'.'{method}.blade.php';
+        return $path.'\\'.lcfirst(class_basename($this->option($this->model))).'\\'.'{method}.blade.php';
     }
 
     protected function getPathInput()

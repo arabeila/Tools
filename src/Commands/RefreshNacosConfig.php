@@ -21,16 +21,6 @@ class RefreshNacosConfig extends Command
     protected $description = 'Refresh config from Nacos';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed

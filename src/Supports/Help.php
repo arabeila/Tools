@@ -37,9 +37,7 @@ class Help
     {
         $prefix = config('app.prefix').strtoupper($flag).date('ymdHis');
 
-        $no = $prefix.str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        return $no;
+        return $prefix.str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
 

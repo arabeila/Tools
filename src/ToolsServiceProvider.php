@@ -50,6 +50,10 @@ class ToolsServiceProvider extends ServiceProvider
                 RefreshNacosConfig::class,
                 ResetPassword::class,
             ]);
+        }else{
+            $this->commands([
+                CreatePermissions::class,
+            ]);
         }
     }
 

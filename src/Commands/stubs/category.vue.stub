@@ -5,7 +5,7 @@
             <a-table :columns="columns" :dataSource="data"
                      :childrenColumnName="childrenColumnName" :pagination="false">
                 <template slot="tag" slot-scope="text,row,index">
-                    <span v-if="row.if_show === 1">
+                    <span v-if="row.is_show === 1">
                         <Tag color="success">显示</Tag>
                     </span>
                     <span v-else>
@@ -39,8 +39,8 @@
                         <InputNumber :max="255" :min="0" v-model.trim="form.sort"></InputNumber>
                     </FormItem>
 
-                    <FormItem label="是否可见" prop="if_show">
-                        <RadioGroup v-model="form.if_show">
+                    <FormItem label="是否可见" prop="is_show">
+                        <RadioGroup v-model="form.is_show">
                             <Radio :label="1">可见</Radio>
                             <Radio :label="2">隐藏</Radio>
                         </RadioGroup>
@@ -65,7 +65,7 @@
                     parent_name: 'Root',
                     parent_id: 0,
                     name: null,
-                    if_show: 1,
+                    is_show: 1,
                     sort: 0,
                 },
                 columns: [
@@ -102,7 +102,7 @@
                     },
                     {
                         title: '是否可见',
-                        key: 'if_show',
+                        key: 'is_show',
                         scopedSlots: {
                             customRender: 'tag',
                         }
@@ -125,7 +125,7 @@
                         required: true,
                         message: '请输入排序',
                     },
-                    if_show: {
+                    is_show: {
                         required: true,
                         message: '请选择是否显示',
                     },
@@ -221,7 +221,7 @@
                     parent_name: 'Root',
                     parent_id: 0,
                     name: null,
-                    if_show: 1,
+                    is_show: 1,
                     sort: 0,
                 };
             },
@@ -231,7 +231,7 @@
                     parent_name: row.name,
                     parent_id: row.id,
                     name: null,
-                    if_show: 1,
+                    is_show: 1,
                     sort: 0,
                 };
             },
