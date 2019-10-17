@@ -40,5 +40,13 @@ class Help
         return $prefix.str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * 生成菜单缓存键名
+     * @desc
+     */
+    public static function key($object, $guard = 'admin', $id = 0)
+    {
+        return strtolower(config('app.name').'-'.$guard.'-'.$object.'-'.$id);
+    }
 
 }

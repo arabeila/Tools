@@ -13,6 +13,7 @@ use Arabeila\Tools\Commands\CodeDetector;
 use Arabeila\Tools\Commands\CodeStyleCheck;
 use Arabeila\Tools\Commands\CodeStyleRepair;
 use Arabeila\Tools\Commands\CreateController;
+use Arabeila\Tools\Commands\CreateMenus;
 use Arabeila\Tools\Commands\CreateModel;
 use Arabeila\Tools\Commands\CreatePermissions;
 use Arabeila\Tools\Commands\CreateRequest;
@@ -49,8 +50,9 @@ class ToolsServiceProvider extends ServiceProvider
                 CreatePermissions::class,
                 RefreshNacosConfig::class,
                 ResetPassword::class,
+                CreateMenus::class,
             ]);
-        }else{
+        } else {
             $this->commands([
                 CreatePermissions::class,
             ]);
