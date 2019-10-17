@@ -37,24 +37,23 @@ class RefreshNacosConfig extends Command
             throw new \Exception(str_replace('var', 'NACOS_HOST', $message));
         }
 
-        if (env('APP_ENV')) {
+        if (!env('APP_ENV')) {
             throw new \Exception(str_replace('var', 'APP_ENV', $message));
         }
 
-        if (env('NACOS_DATAID')) {
+        if (!env('NACOS_DATAID')) {
             throw new \Exception(str_replace('var', 'NACOS_DATAID', $message));
         }
 
-        if (env('NACOS_GROUPID')) {
+        if (!env('NACOS_GROUPID')) {
             throw new \Exception(str_replace('var', 'NACOS_GROUPID', $message));
         }
 
-        if (env('NACOS_NAMESPACEID')) {
+        if (!env('NACOS_NAMESPACEID')) {
             throw new \Exception(str_replace('var', 'NACOS_NAMESPACEID', $message));
         }
 
         //获取 快照
-
         \alibaba\nacos\Nacos::init(env('NACOS_HOST'),
             env('APP_ENV'),
             env('NACOS_DATAID'),
