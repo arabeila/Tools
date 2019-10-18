@@ -28,7 +28,7 @@ class MenuService
         Cache::tags(self::getTags($guard))->flush();
     }
 
-    public function generate($data,$menu,$guard)
+    public function generate($data,$menu,$guard,$theme)
     {
         if (empty($data['children'])) {
             $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
@@ -41,20 +41,31 @@ class MenuService
             return $menu->addIf($this->checkPermission($guard,$data['url']),$link);
         }
 
-        $child = Menu::new()->addClass('treeview-menu');
+        if (in_array(strtolower($theme), ['adminlte', 'storelte'])) {
 
-        $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
+            $child = Menu::new()->addClass('treeview-menu');
 
-        $text = '<span>'.$data['name'].'</span>';
+            $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
 
-        $btn = '<span class="pull-right-container">
+            $text = '<span>'.$data['name'].'</span>';
+
+            $btn = '<span class="pull-right-container">
 						<i class="fa fa-angle-left pull-right"></i>
 					</span>';
 
-        $child->addParentClass('treeview');
+            $child->addParentClass('treeview');
+        } else {
+            $child = Menu::new()->addClass('collapse');
+
+            $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
+
+            $text = '<span class="link-title">  '.$data['name']."</span>";
+
+            $btn = '<span class="fa arrow"></span>';
+        }
 
         foreach ($data['children'] as $childData) {
-            $child = $this->generate($childData, $child,$guard);
+            $child = $this->generate($childData, $child,$guard,$theme);
         }
 
         if($child->count()){
@@ -64,7 +75,7 @@ class MenuService
         return $menu;
     }
 
-    public function build($guard)
+    public function build($guard,$theme)
     {
         $key = Help::key('menus',Auth::guard($guard)->id());
 
@@ -73,13 +84,17 @@ class MenuService
             self::flush($guard);
         }
 
-        echo Cache::tags(self::getTags())->rememberForever($key, function () use ($guard) {
-            $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('header'))->addClass('sidebar-menu')->setAttributes(['data-widget' => 'tree']);
+        echo Cache::tags(self::getTags())->rememberForever($key, function () use ($guard,$theme) {
+            if (in_array(strtolower($theme), ['adminlte', 'storelte'])) {
+                $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('header'))->addClass('sidebar-menu')->setAttributes(['data-widget' => 'tree']);
+            } else {
+                $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('nav-header'))->addClass('bg-blue dker')->setAttribute('id', 'menu');
+            }
 
             $menus = MenuModel::guardName($guard)->with('children')->where('parent_id',0)->get()->toArray();
 
             foreach ($menus as $key => $value) {
-                $menu = $this->generate($value, $menu,$guard);
+                $menu = $this->generate($value, $menu,$guard,$theme);
             }
 
             return $menu;
