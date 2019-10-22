@@ -122,7 +122,11 @@ class PermissionService
             $this->permissions[$guard] = [];
         }
 
-        return sort(array_unique($this->permissions[$guard]));
+        $data = array_unique($this->permissions[$guard]);
+
+        sort($data);
+
+        return $data;
     }
 
     /**
