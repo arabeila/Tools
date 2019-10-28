@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Menu extends Model
 {
+    protected $table = 'arabeila_menus';
+
     protected $fillable = [
         'icon',
         'type',

@@ -34,6 +34,8 @@ class ToolsServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/stubs', 'tools');
 
+        $this->loadMigrationsFrom(__DIR__.'/migrations');
+
         $this->publishes([
             __DIR__.'/Commands/stubs' => resource_path('stubs'),
         ]);
