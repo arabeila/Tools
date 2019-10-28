@@ -20,7 +20,7 @@ class MenuService
 {
     public static function getTags($guard = 'admin')
     {
-        return $guard . '-menu';
+        return $guard.'-menu';
     }
 
     public static function flush($guard)
@@ -31,11 +31,11 @@ class MenuService
     public function generate($data, $menu, $guard, $theme)
     {
         if (empty($data['children'])) {
-            $icon = $data['icon'] ? '<i class="' . $data['icon'] . '"></i>' : '';
+            $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
 
-            $text = '<span>' . $data['name'] . '</span>';
+            $text = '<span>'.$data['name'].'</span>';
 
-            $link = Link::to($data['url'], $icon . $text)
+            $link = Link::to($data['url'], $icon.$text)
                 ->setAttribute('target', $data['type']);
 
             return $menu->addIf($this->checkPermission($guard, $data['url']), $link);
@@ -53,7 +53,7 @@ class MenuService
             self::flush($guard);
         }
 
-        return Cache::tags(self::getTags())->rememberForever($key, function () use ($guard, $theme) {
+        return Cache::tags(self::getTags($guard))->rememberForever($key, function () use ($guard, $theme) {
 
             return $this->getMenu($guard, $theme);
         });
@@ -67,7 +67,8 @@ class MenuService
                 $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('header'))->addClass('sidebar-menu')->setAttributes(['data-widget' => 'tree']);
                 break;
             case 'metis':
-                $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('nav-header'))->addClass('bg-blue dker')->setAttribute('id', 'menu');
+                $menu = Menu::new()->add(Html::raw('菜单')->addParentClass('nav-header'))->addClass('bg-blue dker')->setAttribute('id',
+                    'menu');
                 break;
         }
 
@@ -87,9 +88,9 @@ class MenuService
             case 'adminlte':
                 $child = Menu::new()->addClass('treeview-menu');
 
-                $icon = $data['icon'] ? '<i class="' . $data['icon'] . '"></i>' : '';
+                $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
 
-                $text = '<span>' . $data['name'] . '</span>';
+                $text = '<span>'.$data['name'].'</span>';
 
                 $btn = '<span class="pull-right-container">
 						<i class="fa fa-angle-left pull-right"></i>
@@ -100,9 +101,9 @@ class MenuService
             case 'metis':
                 $child = Menu::new()->addClass('collapse');
 
-                $icon = $data['icon'] ? '<i class="' . $data['icon'] . '"></i>' : '';
+                $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
 
-                $text = '<span class="link-title">  ' . $data['name'] . "</span>";
+                $text = '<span class="link-title">  '.$data['name']."</span>";
 
                 $btn = '<span class="fa arrow"></span>';
                 break;
@@ -113,7 +114,7 @@ class MenuService
         }
 
         if ($child->count()) {
-            $menu->submenu(Link::to('#', $icon . $text . $btn), $child);
+            $menu->submenu(Link::to('#', $icon.$text.$btn), $child);
         }
 
         return $menu;
