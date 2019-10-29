@@ -318,7 +318,12 @@ class PermissionService
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
-                list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+                try{
+                    list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+                }catch (\Exception $exception){
+                    // 非法格式注释 解析失败 补丁
+                    continue;
+                }
 
                 if (Str::start_with($type, '$')) {
                     $params[$k]['type'] = $name;

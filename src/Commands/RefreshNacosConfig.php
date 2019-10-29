@@ -3,6 +3,7 @@
 namespace Arabeila\Tools\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 
 class RefreshNacosConfig extends Command
 {
@@ -31,27 +32,8 @@ class RefreshNacosConfig extends Command
             throw new \Exception('.env 文件未找到');
         }
 
-        $message = '环境变量 var 未找到，尝试清除配置缓存？';
-
-        if (!env('NACOS_HOST')) {
-            throw new \Exception(str_replace('var', 'NACOS_HOST', $message));
-        }
-
-        if (!env('APP_ENV')) {
-            throw new \Exception(str_replace('var', 'APP_ENV', $message));
-        }
-
-        if (!env('NACOS_DATAID')) {
-            throw new \Exception(str_replace('var', 'NACOS_DATAID', $message));
-        }
-
-        if (!env('NACOS_GROUPID')) {
-            throw new \Exception(str_replace('var', 'NACOS_GROUPID', $message));
-        }
-
-        if (!env('NACOS_NAMESPACEID')) {
-            throw new \Exception(str_replace('var', 'NACOS_NAMESPACEID', $message));
-        }
+        //清空 配置缓存
+        Artisan::call('config:clear');
 
         //获取 快照
         \alibaba\nacos\Nacos::init(env('NACOS_HOST'),
