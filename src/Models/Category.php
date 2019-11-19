@@ -3,6 +3,7 @@
 namespace Arabeila\Tools\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Category extends Model
 {
@@ -33,7 +34,9 @@ class Category extends Model
         parent::boot();
 
         // 监听 Category 的创建事件,用于初始化 path 和 level 字段值
-        static::creating(function (Category $category) {
+        static::creating(function ($category) {
+            $category->clear();
+
             if (!$category->parent_id) {
                 $category->level = 0;
                 $category->path = '-';
@@ -43,7 +46,12 @@ class Category extends Model
             }
         });
 
+        static::updating(function ($category) {
+            $category->clear();
+        });
+
         static::deleting(function ($category) {
+            $category->clear();
             $category->allChildren()->delete();
         });
     }
@@ -141,5 +149,26 @@ class Category extends Model
     public function getFullPathIdsAttribute()
     {
         return array_filter(explode('-', trim('-'.$this->id.'-'.$this->path, '-')));
+    }
+
+    /**
+     * 缓存数据
+     * Date: 2019/11/19
+     * @return mixed
+     */
+    public function cache()
+    {
+        return Cache::tags($this->getTable())->rememberForever($this->getTable(), function () {
+            return self::root(0)->with('children')->orderBy('sort', 'desc')->get();
+        });
+    }
+
+    /**
+     * 清除缓存
+     * Date: 2019/11/19
+     */
+    public function clear()
+    {
+        Cache::tags($this->getTable())->flush();
     }
 }
