@@ -21,8 +21,10 @@ class Category extends Model
     ];
 
     protected $appends = [
-        'disabled', 'expand',
-        'label', 'value',
+        'disabled',
+        'expand',
+        'label',
+        'value',
         'key',
     ];
 
@@ -44,6 +46,11 @@ class Category extends Model
         static::deleting(function ($category) {
             $category->allChildren()->delete();
         });
+    }
+
+    public function scopeRoot($builder, $parentId = null)
+    {
+        return $builder->where('parent_id', $parentId);
     }
 
     // 获取分类名称
@@ -85,19 +92,19 @@ class Category extends Model
     // 获取子分类
     public function child()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort','desc');
+        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort', 'desc');
     }
 
     // 获取所有子分类
     public function allChildren()
     {
-        return $this->child()->with(['allChildren','parent']);
+        return $this->child()->with(['allChildren', 'parent']);
     }
 
     // 获取显示中的子分类
     public function childShow()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort','desc')->where('is_show', 1);
+        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort', 'desc')->where('is_show', 1);
     }
 
     // 获取所有子分类
@@ -128,5 +135,11 @@ class Category extends Model
             ->pluck('name')
             ->push($this->name)
             ->implode(' - ');
+    }
+
+    // 获取所有祖先分类及自身的 ID 值
+    public function getFullPathIdsAttribute()
+    {
+        return array_filter(explode('-', trim('-'.$this->id.'-'.$this->path, '-')));
     }
 }

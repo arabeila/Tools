@@ -96,14 +96,14 @@ class PermissionService
                     case 1:
                         break;
                     case 2:
-                        $data[$className[0]][$className[0].'/'.$className[1]]['class'] = $this->getClassDoc($reflection);
-                        $data[$className[0]][$className[0].'/'.$className[1]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                        $data[$className[0]][$className[0].'/'.$className[1]]['uri'] = $value['uri'];
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['class'] = $this->getClassDoc($reflection);
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['uri'] = $value['uri'];
                         break;
                     case 3:
-                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['class'] = $this->getClassDoc($reflection);
-                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                        $data[$className[0]][$className[0].'/'.$className[1].'/'.$className[2]]['uri'] = $value['uri'];
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['class'] = $this->getClassDoc($reflection);
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
+                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['uri'] = $value['uri'];
                         break;
                 }
             }

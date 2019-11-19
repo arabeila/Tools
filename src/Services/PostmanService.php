@@ -140,7 +140,7 @@ class PostmanService
     /**
      * 获取所有权限
      */
-    public function getPermissions($guard = "Admin")
+    public function getPermissions($guard = 'Admin')
     {
         if (!isset($this->permissions[$guard])) {
             $this->permissions[$guard] = [];
@@ -193,6 +193,10 @@ class PostmanService
 
     /**
      * 获取请求类型
+     * @param $controller
+     * @param $action
+     * Date: 2019/11/18
+     * @return null
      */
     public function getRequestMethod($controller, $action)
     {
@@ -298,11 +302,11 @@ class PostmanService
         $desc = $this->formatDesc($lines[1]);
 
         $url = [
-            "raw"  => "{{url}}/".$uri,
-            "host" => [
-                "{{url}}"
+            'raw'  => '{{url}}'.DIRECTORY_SEPARATOR.$uri,
+            'host' => [
+                '{{url}}'
             ],
-            "path" => explode('/', $uri),
+            'path' => explode(DIRECTORY_SEPARATOR, $uri),
         ];
 
         if ($method == 'GET') {
@@ -318,8 +322,8 @@ class PostmanService
             ];
         } else {
             $body = [
-                "mode"     => "formdata",
-                "formdata" => $var,
+                'mode'     => 'formdata',
+                'formdata' => $var,
             ];
 
             return [
@@ -354,7 +358,7 @@ class PostmanService
         foreach ($lines as $line) {
             if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
-                $desc = trim(str_replace('@desc', "", $tmp[0]));
+                $desc = trim(str_replace('@desc', '', $tmp[0]));
             }
         }
 
@@ -374,7 +378,7 @@ class PostmanService
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
-                $temp = explode(' ', trim(str_replace('@var', "", $tmp[0])));
+                $temp = explode(' ', trim(str_replace('@var', '', $tmp[0])));
 
                 if (count($temp) == 5) {
                     if (Str::start_with($temp[0], '$')) {
@@ -405,7 +409,7 @@ class PostmanService
 
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
-                $temp = explode(' ', trim(str_replace('@return', "", $tmp[0])));
+                $temp = explode(' ', trim(str_replace('@return', '', $tmp[0])));
                 if (count($temp) == 2) {
                     $return[$k]['self_type'] = $temp[0];
                     $return[$k]['data_type'] = $temp[1];
