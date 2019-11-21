@@ -216,6 +216,8 @@ class CategoryController extends Controller
      */
     protected function refreshCache()
     {
+        Cache::forget($this->getSettingKey());
+
         setting([$this->getSettingKey() => setting($this->getSettingKey(), 1) + 1])->save();
     }
 }
