@@ -54,11 +54,11 @@ class CategoryController extends Controller
     protected function getData(Request $request)
     {
         $data = [
-            'name'         => $request->get('name'),
-            'sort'         => $request->get('sort', 0),
-            $this->is_show => $request->get('is_show', 1),
-            $this->parent_id    => $request->get('parent_id', 0),
-            'is_directory' => false,
+            'name'           => $request->get('name'),
+            'sort'           => $request->get('sort', 0),
+            $this->is_show   => $request->get('is_show', 1),
+            $this->parent_id => $request->get('parent_id', 0),
+            'is_directory'   => false,
         ];
 
         return $data;
@@ -88,9 +88,11 @@ class CategoryController extends Controller
         $whiteList = $this->getWhiteList();
 
         if (empty($whiteList)) {
-            $categories = $this->model::where($this->parent_id, 0)->with('allChildren')->orderBy('sort', 'desc')->get();
+            $categories = $this->model::where($this->parent_id,
+                0)->orWhereNull($this->parent_id)->with('allChildren')->orderBy('sort', 'desc')->get();
         } else {
-            $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id, 0)->with('allChildren')->orderBy('sort', 'desc')->get();
+            $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id,
+                0)->orWhereNull($this->parent_id)->with('allChildren')->orderBy('sort', 'desc')->get();
         }
 
         return $categories;
@@ -110,9 +112,11 @@ class CategoryController extends Controller
             $whiteList = $this->getWhiteList();
 
             if (empty($whiteList)) {
-                $categories = $this->model::where($this->parent_id, 0)->with('children')->orderBy('sort')->get();
+                $categories = $this->model::where($this->parent_id,
+                    0)->orWhereNull($this->parent_id)->with('children')->orderBy('sort')->get();
             } else {
-                $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id, 0)->with([
+                $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id,
+                    0)->orWhereNull($this->parent_id)->with([
                     'children'                   => function ($query) use ($whiteList) {
                         $query->whereIn('id', $whiteList);
                     },
