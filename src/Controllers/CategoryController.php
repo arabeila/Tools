@@ -89,10 +89,10 @@ class CategoryController extends Controller
 
         if (empty($whiteList)) {
             $categories = $this->model::where($this->parent_id,
-                0)->orWhereNull($this->parent_id)->with('allChildren')->orderBy('sort', 'desc')->get();
+                0)->with('allChildren')->orderBy('sort', 'desc')->get();
         } else {
             $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id,
-                0)->orWhereNull($this->parent_id)->with('allChildren')->orderBy('sort', 'desc')->get();
+                0)->with('allChildren')->orderBy('sort', 'desc')->get();
         }
 
         return $categories;
@@ -113,10 +113,10 @@ class CategoryController extends Controller
 
             if (empty($whiteList)) {
                 $categories = $this->model::where($this->parent_id,
-                    0)->orWhereNull($this->parent_id)->with('children')->orderBy('sort')->get();
+                    0)->with('children')->orderBy('sort')->get();
             } else {
-                $categories = $this->model::whereIn('id', $whiteList)->where($this->parent_id,
-                    0)->orWhereNull($this->parent_id)->with([
+                $categories = $this->model::where($this->parent_id,
+                    0)->whereIn('id', $whiteList)->with([
                     'children'                   => function ($query) use ($whiteList) {
                         $query->whereIn('id', $whiteList);
                     },
