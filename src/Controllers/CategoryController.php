@@ -203,9 +203,11 @@ class CategoryController extends Controller
      */
     public function destroy($id)
     {
-        $this->refreshCache();
-
         $bool = $this->model::destroy($id);
+
+        if ($bool) {
+            $this->refreshCache();
+        }
 
         return Help::reply($bool, $bool ? $this->title.'分类删除成功' : $this->title.'分类删除失败');
     }

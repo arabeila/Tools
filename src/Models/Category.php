@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Cache;
 
 class Category extends Model
 {
+    protected $primaryKey = 'id';
+    protected $parentKey = 'parent_id';
+
     protected $guarded = [];
 
     const IS_SHOW_ACTIVATE = 1;
@@ -37,12 +40,13 @@ class Category extends Model
         static::creating(function ($category) {
             $category->clear();
 
-            if (!$category->parent_id) {
+            if (!$category->attributes[$category->parentKey]) {
+                $category->parent_id = 0;
                 $category->level = 0;
                 $category->path = '-';
             } else {
                 $category->level = $category->parent->level + 1;
-                $category->path = $category->parent->path.$category->parent_id.'-';
+                $category->path = $category->parent->path.$category->attributes[$category->parentKey].'-';
             }
         });
 
@@ -52,13 +56,14 @@ class Category extends Model
 
         static::deleting(function ($category) {
             $category->clear();
-            $category->allChildren()->delete();
+
+            self::query()->where('path', 'like', '%'.$category->attributes[$category->parentKey].'%')->delete();
         });
     }
 
     public function scopeRoot($builder, $parentId = null)
     {
-        return $builder->where('parent_id', $parentId);
+        return $builder->where($this->parentKey, $parentId);
     }
 
     // 获取分类名称
@@ -70,7 +75,7 @@ class Category extends Model
     // 获取分类 id
     public function getValueAttribute()
     {
-        return $this->id;
+        return $this->attributes[$this->primaryKey];
     }
 
     // 获取分类 id
@@ -94,13 +99,13 @@ class Category extends Model
     // 获取父级分类
     public function parent()
     {
-        return $this->belongsTo(get_class($this));
+        return $this->belongsTo(get_class($this), $this->parentKey, $this->primaryKey);
     }
 
     // 获取子分类
     public function child()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort', 'desc');
+        return $this->hasMany(get_class($this), $this->parentKey, $this->primaryKey)->orderBy('sort', 'desc');
     }
 
     // 获取所有子分类
@@ -112,7 +117,8 @@ class Category extends Model
     // 获取显示中的子分类
     public function childShow()
     {
-        return $this->hasMany(get_class($this), 'parent_id')->orderBy('sort', 'desc')->where('is_show', 1);
+        return $this->hasMany(get_class($this), $this->parentKey, $this->primaryKey)->orderBy('sort',
+            'desc')->where('is_show', self::IS_SHOW_ACTIVATE);
     }
 
     // 获取所有子分类
@@ -130,8 +136,8 @@ class Category extends Model
     // 获取所有祖先分类并按层级排序
     public function getAncestorsAttribute()
     {
-        return Category::query()
-            ->whereIn('id', $this->path_ids)
+        return self::query()
+            ->whereIn($this->primaryKey, $this->path_ids)
             ->orderBy('level')
             ->get();
     }
@@ -148,7 +154,7 @@ class Category extends Model
     // 获取所有祖先分类及自身的 ID 值
     public function getFullPathIdsAttribute()
     {
-        return array_filter(explode('-', trim('-'.$this->id.'-'.$this->path, '-')));
+        return array_filter(explode('-', trim('-'.$this->attributes[$this->primaryKey].'-'.$this->path, '-')));
     }
 
     /**
