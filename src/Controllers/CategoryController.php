@@ -18,17 +18,23 @@ class CategoryController extends Controller
     protected $key;
     protected $title;
     protected $path;
+    protected $tag;
 
     protected $is_show = 'is_show';
 
     protected $parent_id = 'parent_id';
 
-    public function __construct($model, $key, $title, $path = '')
+    public function __construct($model, $key, $title, $path = '', $tag = '')
     {
         $this->model = $model;
         $this->key = strtolower($key);
         $this->title = $title;
         $this->path = $path;
+        $this->tag = $tag;
+
+        if (!$this->tag) {
+            throw new \Exception('param tag is not defined!');
+        }
     }
 
     /**
@@ -108,7 +114,7 @@ class CategoryController extends Controller
             Cache::forget($this->getSettingKey());
         }
 
-        return Cache::rememberForever($this->getSettingKey(), function () {
+        return Cache::tags($this->tag)->rememberForever($this->getSettingKey(), function () {
             $whiteList = $this->getWhiteList();
 
             if (empty($whiteList)) {
@@ -219,7 +225,6 @@ class CategoryController extends Controller
     protected function refreshCache()
     {
         Cache::forget($this->getSettingKey());
-
-        setting([$this->getSettingKey() => setting($this->getSettingKey(), 1) + 1])->save();
+        Cache::flush($this->tag);
     }
 }
