@@ -80,6 +80,16 @@ class CategoryController extends Controller
     }
 
     /**
+     * 缓存 tag
+     * Date: 2019/12/5
+     * @return string
+     */
+    protected function getTag()
+    {
+        return $this->tag;
+    }
+
+    /**
      * 获取分类一览
      * @desc 获取分类一览
      * @param $request
@@ -114,7 +124,7 @@ class CategoryController extends Controller
             Cache::forget($this->getSettingKey());
         }
 
-        return Cache::tags($this->tag)->rememberForever($this->getSettingKey(), function () {
+        return Cache::tags($this->getTag())->rememberForever($this->getSettingKey(), function () {
             $whiteList = $this->getWhiteList();
 
             if (empty($whiteList)) {
@@ -225,6 +235,6 @@ class CategoryController extends Controller
     protected function refreshCache()
     {
         Cache::forget($this->getSettingKey());
-        Cache::flush($this->tag);
+        Cache::flush($this->getTag());
     }
 }

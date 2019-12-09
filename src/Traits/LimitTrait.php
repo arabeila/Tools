@@ -1,10 +1,13 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: TELstatic
  * Date: 2019/11/19
  * Time: 9:51
  */
+
+namespace Arabeila\Tools\Traits;
 
 trait LimitTrait
 {

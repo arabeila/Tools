@@ -49,7 +49,6 @@ class Help
         return strtolower(config('app.name').'-'.$guard.'-'.$object.'-'.$id);
     }
 
-
     function xenv($data)
     {
         $envPath = base_path().DIRECTORY_SEPARATOR.'.env';

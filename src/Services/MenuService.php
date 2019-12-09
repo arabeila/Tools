@@ -16,19 +16,61 @@ use Spatie\Menu\Html;
 use Spatie\Menu\Link;
 use Spatie\Menu\Menu;
 
+/**
+ * 菜单服务类
+ * @desc
+ * Class MenuService
+ * @package Arabeila\Tools\Services
+ */
 class MenuService
 {
+    /**
+     * 获取缓存分组名
+     * @param string $guard
+     * Date: 2019/12/9
+     * @return string
+     */
     public static function getTags($guard = 'admin')
     {
         return $guard.'-menu';
     }
 
-    public static function flush($guard)
+    /**
+     * 刷新菜单
+     * @desc 按用户清空
+     * @param $guard
+     * @param $userId
+     * Date: 2019/12/9
+     */
+    public static function refresh($guard, $userId)
+    {
+        $key = Help::key('menus', $guard, $userId);
+
+        Cache::forget($key);
+    }
+
+    /**
+     * 刷新菜单
+     * @desc 按分组清空
+     * @param string $guard
+     * Date: 2019/12/9
+     */
+    public static function flush($guard = 'admin')
     {
         Cache::tags(self::getTags($guard))->flush();
     }
 
-    public function generate($data, $menu, $guard, $theme)
+    /**
+     * 生成菜单
+     * @desc 生成菜单
+     * @param $data
+     * @param $menu
+     * @param string $guard
+     * @param string $theme
+     * Date: 2019/12/9
+     * @return mixed
+     */
+    public function generate($data, $menu, $guard = 'admin', $theme = 'adminLte')
     {
         if (empty($data['children'])) {
             $icon = $data['icon'] ? '<i class="'.$data['icon'].'"></i>' : '';
@@ -44,9 +86,17 @@ class MenuService
         return $this->getChildMenu($data, $menu, $guard, $theme);
     }
 
-    public function build($guard = 'admin', $theme = 'adminlte')
+    /**
+     * 获取菜单
+     * @desc
+     * @param string $guard
+     * @param string $theme
+     * Date: 2019/12/9
+     * @return mixed
+     */
+    public function build($guard = 'admin', $theme = 'adminLte')
     {
-        $key = Help::key('menus', Auth::guard($guard)->id());
+        $key = Help::key('menus', $guard, Auth::guard($guard)->id());
 
         if (app()->environment() == 'local') {
             Cache::forget($key);
@@ -59,6 +109,14 @@ class MenuService
         });
     }
 
+    /**
+     * 菜单初始化
+     * @desc
+     * @param $guard
+     * @param $theme
+     * Date: 2019/12/9
+     * @return mixed
+     */
     public function getMenu($guard, $theme)
     {
         switch (strtolower($theme)) {
@@ -81,6 +139,15 @@ class MenuService
         return $menu;
     }
 
+    /**
+     * 生成子菜单
+     * @param $data
+     * @param $menu
+     * @param $guard
+     * @param $theme
+     * Date: 2019/12/9
+     * @return mixed
+     */
     public function getChildMenu($data, $menu, $guard, $theme)
     {
         switch (strtolower($theme)) {
