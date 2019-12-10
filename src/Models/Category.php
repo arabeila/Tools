@@ -57,7 +57,12 @@ class Category extends Model
         static::deleting(function ($category) {
             $category->clear();
 
-            self::query()->where('path', 'like', '%'.$category->attributes[$category->parentKey].'%')->delete();
+            if ($category->attributes[$category->parentKey] == 0) {
+                self::query()->where($category->parentKey, $category->primaryKey)->delete();
+            } else {
+                self::query()->where('path', 'like',
+                    '%'.$category->attributes[$category->parentKey].'%')->delete();
+            }
         });
     }
 
