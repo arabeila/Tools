@@ -57,12 +57,7 @@ class Category extends Model
         static::deleting(function ($category) {
             $category->clear();
 
-            if ($category->attributes[$category->parentKey] == 0) {
-                self::query()->where($category->parentKey, $category->primaryKey)->delete();
-            } else {
-                self::query()->where('path', 'like',
-                    '%'.$category->attributes[$category->parentKey].'%')->delete();
-            }
+            self::query()->where('path', 'like', '%'.$category->attributes[$category->primaryKey].'%')->delete();
         });
     }
 
@@ -86,7 +81,7 @@ class Category extends Model
     // 获取分类 id
     public function getKeyAttribute()
     {
-        $this->getValueAttribute();
+        return $this->getValueAttribute();
     }
 
     // 获取分类显示状态
