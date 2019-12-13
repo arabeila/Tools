@@ -21,6 +21,15 @@ class CreateMenus extends Command
      */
     protected $description = '生成菜单';
 
+    protected $model;
+
+    public function __construct(Menu $model)
+    {
+        parent::__construct();
+
+        $this->model = $model;
+    }
+
     /**
      * Execute the console command.
      *
@@ -28,9 +37,9 @@ class CreateMenus extends Command
      */
     public function handle()
     {
-        Menu::guardName($this->option('guard'))->delete();
+        $this->model::guardName($this->option('guard'))->delete();
 
-        $menus = Menu::getData($this->option('guard'));
+        $menus = $this->model::getData($this->option('guard'));
 
         foreach ($menus as $item) {
             $this->generate($item, 0, $this->option('guard'));
@@ -42,7 +51,7 @@ class CreateMenus extends Command
         $data['parent_id'] = $parent_id;
         $data['guard_name'] = $guard;
 
-        $menu = Menu::create($data);
+        $menu = $this->model::create($data);
 
         if (isset($data['children'])) {
             foreach ($data['children'] as $child) {
