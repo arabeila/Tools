@@ -52,7 +52,19 @@ class PermissionService
 
             $controller = substr($actionName, 0, $end[0][1]);
 
+            if (!starts_with($controller, 'App\Http\Controllers')) {
+                continue;
+            }
+
             if (in_array($controller, $this->blackList)) {
+                continue;
+            }
+
+            if (in_array($route->action['prefix'], [
+                'telescope',
+                '_debugbar',
+                'rakan',
+            ])) {
                 continue;
             }
 
@@ -63,6 +75,7 @@ class PermissionService
 
             $arr[$this->methodKey] = method_exists($route, 'getMethods') ? $route->getMethods()[0] : $route->methods[0];
             $arr['uri'] = method_exists($route, 'getPath') ? $route->getPath() : $route->uri;
+            $arr['prefix'] = current(explode('/', $route->action['prefix']));
 
             if (!isset($this->list[$arr[$this->controllerKey]])) {
                 $this->list[$arr[$this->controllerKey]] = [
@@ -84,6 +97,7 @@ class PermissionService
         foreach ($this->list as $item) {
             foreach ($item as $value) {
                 $class = $value[$this->controllerKey];
+                $prefix = $value['prefix'];
 
                 $className = explode('\\', str_replace('App\Http\Controllers\\', '', $class));
 
@@ -96,14 +110,16 @@ class PermissionService
                     case 1:
                         break;
                     case 2:
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['class'] = $this->getClassDoc($reflection);
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1]]['uri'] = $value['uri'];
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1]]['class'] = $this->getClassDoc($reflection);
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1]]['actions'] = $this->getActionDoc($actions,
+                            $reflection, $className[0], $prefix);
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1]]['uri'] = $value['uri'];
                         break;
                     case 3:
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['class'] = $this->getClassDoc($reflection);
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['actions'] = $this->getActionDoc($actions, $reflection, $className[0]);
-                        $data[$className[0]][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['uri'] = $value['uri'];
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['class'] = $this->getClassDoc($reflection);
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['actions'] = $this->getActionDoc($actions,
+                            $reflection, $className[0],$prefix);
+                        $data[ucfirst($prefix)][$className[0].DIRECTORY_SEPARATOR.$className[1].DIRECTORY_SEPARATOR.$className[2]]['uri'] = $value['uri'];
                         break;
                 }
             }
@@ -155,11 +171,11 @@ class PermissionService
     /**
      * 获取方法Url
      */
-    public function getRequestUrl($controller, $action)
+    public function getRequestUrl($controller, $action, $prefix)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item[$this->actionKey] == $action) {
-                return config('app.url').$item['uri'];
+            if ($item[$this->controllerKey] == $controller && $item[$this->actionKey] == $action && $item['prefix'] == $prefix) {
+                return rtrim(config('app.url'), '/').'/'.$item['uri'];
             }
         }
         return null;
@@ -171,7 +187,7 @@ class PermissionService
     public function getRequestMethod($controller, $action)
     {
         foreach ($this->list[$controller] as $item) {
-            if ($item[$this->actionKey] == $action) {
+            if ($item[$this->controllerKey] == $controller && $item[$this->actionKey] == $action) {
                 return $item[$this->methodKey];
             }
         }
@@ -181,7 +197,7 @@ class PermissionService
     /**
      * 获取方法注释
      */
-    public function getActionDoc($methodArray, \ReflectionClass $reflection, $nameSpace)
+    public function getActionDoc($methodArray, \ReflectionClass $reflection, $nameSpace, $prefix)
     {
         $arr = [];
         $methods = $reflection->getMethods();
@@ -195,8 +211,8 @@ class PermissionService
 
             $arr[$i]['name'] = $property->getName();
             $controller = $reflection->getName();
-            $arr[$i]['url'] = $this->getRequestUrl($controller, $arr[$i]['name']);
-            $arr[$i]['auth'] = str_replace(config('app.url'), '', $arr[$i]['url']);
+            $arr[$i]['url'] = $this->getRequestUrl($controller, $arr[$i]['name'], $prefix);
+            $arr[$i]['auth'] = str_replace(rtrim(config('app.url'), '/').'/', '', $arr[$i]['url']);
 
             if (isset($this->permissions[$nameSpace])) {
                 array_push($this->permissions[$nameSpace], $arr[$i]['auth']);
@@ -208,7 +224,7 @@ class PermissionService
             $arr[$i][$this->methodKey] = $this->getRequestMethod($controller, $arr[$i]['name']);
             $arr[$i]['_expanded'] = true;
 
-            $arr[$i]['doc'] = $this->formatDoc($doc);
+            $arr[$i]['doc'] = $this->formatDoc($doc,$nameSpace);
 
             $i++;
         }
@@ -318,9 +334,10 @@ class PermissionService
         foreach ($lines as $k => $line) {
             if (preg_match($reg, trim($line), $tmp) !== false && !empty($tmp)) {
 
-                try{
-                    list($type, $name, $require, $default, $comment) = explode(' ', trim(str_replace('@var', "", $tmp[0])));
-                }catch (\Exception $exception){
+                try {
+                    list($type, $name, $require, $default, $comment) = explode(' ',
+                        trim(str_replace('@var', "", $tmp[0])));
+                } catch (\Exception $exception) {
                     // 非法格式注释 解析失败 补丁
                     continue;
                 }
