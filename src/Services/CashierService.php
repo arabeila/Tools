@@ -155,9 +155,10 @@ FORM;
                 'access-token' => $this->getAccessToken(),
             ],
             'form_params' => [
-                'user_id'      => $payment->user_id,
-                'no'           => $payment->no,
-                'total_amount' => $payment->total_amount,
+                'user_id'       => $payment->user_id,
+                'no'            => $payment->no,
+                'total_amount'  => $payment->total_amount,
+                'payment_price' => $payment->payment_price,
             ],
         ]);
 
