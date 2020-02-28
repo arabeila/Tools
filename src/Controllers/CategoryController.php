@@ -121,7 +121,7 @@ class CategoryController extends Controller
     public function cascade()
     {
         if (config('tools.category.refresh')) {
-            Cache::forget($this->getSettingKey());
+            Cache::tags($this->getTag())->forget($this->getSettingKey());
         }
 
         return Cache::tags($this->getTag())->rememberForever($this->getSettingKey(), function () {
@@ -234,7 +234,7 @@ class CategoryController extends Controller
      */
     protected function refreshCache()
     {
-        Cache::forget($this->getSettingKey());
-        Cache::flush($this->getTag());
+        Cache::tags($this->getTag())->forget($this->getSettingKey());
+        Cache::tags($this->getTag())->flush();
     }
 }
