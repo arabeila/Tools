@@ -146,8 +146,15 @@ FORM;
      * 添加支付单
      * @desc 添加支付单
      */
-    public function postPayment($payment)
+    public function postPayment($payment, $orders)
     {
+        $info = [];
+        $res = [];
+        foreach ($orders as $order) {
+            $info[$order['no']] = $order['order_price'];
+            array_push($res, $info);
+        }
+
         $path = 'api/payments';
 
         $response = $this->client->post($this->url.$path, [
@@ -159,6 +166,7 @@ FORM;
                 'no'            => $payment->no,
                 'total_amount'  => $payment->total_amount,
                 'payment_price' => $payment->payment_price,
+                'order_info'    => $res,
             ],
         ]);
 
@@ -222,6 +230,7 @@ FORM;
                 'payment_no' => $refund->payment->no,
                 'price'      => $refund->price,
                 'desc'       => $refund->desc,
+                'order_no'   => $refund->order->no,
             ],
         ]);
 
