@@ -7,20 +7,22 @@
  */
 
 return [
-    'path'      => [
+    'path'       => [
         'view' => 'resources\\views\\',
         'vue'  => 'resources\\assets\\js\\',
     ],
     //    PermissionService 黑名单
-    'blackList' => [
+    'blackList'  => [
         'Barryvdh\Debugbar\Controllers\CacheController',
         'Barryvdh\Debugbar\Controllers\OpenHandlerController',
         'Barryvdh\Debugbar\Controllers\AssetController',
     ],
-    'guards'    => [
+    'guards'     => [
         'auth:api',
     ],
-    'category'  => [
+    'category'   => [
         'refresh' => 1, // 分类清除缓存
-    ]
+    ],
+    'access_key' => env('APP_AK'),
+    'secret_key' => env('APP_SK'),
 ];

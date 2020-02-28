@@ -65,6 +65,7 @@ class CategoryController extends Controller
             $this->is_show   => $request->get('is_show', 1),
             $this->parent_id => $request->get('parent_id', 0),
             'is_directory'   => false,
+            'thumb'          => $request->get('thumb'),
         ];
 
         return $data;
@@ -199,7 +200,7 @@ class CategoryController extends Controller
      */
     public function update($id, Request $request)
     {
-        $data = array_only($this->getData($request), ['name', 'sort', $this->is_show]);
+        $data = array_only($this->getData($request), ['name', 'sort', $this->is_show,'thumb']);
 
         $bool = $this->model::where('id', $id)->update($data);
 

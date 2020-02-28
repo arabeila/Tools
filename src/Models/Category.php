@@ -30,6 +30,7 @@ class Category extends Model
         'label',
         'value',
         'key',
+        'ancestors',
     ];
 
     protected static function boot()
@@ -154,7 +155,11 @@ class Category extends Model
     // 获取所有祖先分类及自身的 ID 值
     public function getFullPathIdsAttribute()
     {
-        return array_filter(explode('-', trim('-'.$this->attributes[$this->primaryKey].'-'.$this->path, '-')));
+        $arr = array_filter(explode('-', trim('-'.$this->attributes[$this->primaryKey].'-'.$this->path, '-')));
+
+        sort($arr);
+
+        return $arr;
     }
 
     /**
@@ -164,6 +169,11 @@ class Category extends Model
      */
     public function cache()
     {
+        if(app()->environment() == 'local'){
+            Cache::forget($this->getTable());
+            self::clear();
+        }
+
         return Cache::tags($this->getTable())->rememberForever($this->getTable(), function () {
             return self::root(0)->with('children')->orderBy('sort', 'desc')->get();
         });
