@@ -246,7 +246,7 @@ FORM;
      */
     public function getWeixinPayConfig($no, $openId, $type = 'mini')
     {
-        $path = 'api/payments/config';
+        $path = 'api/payments/config/'.$type;
 
         $response = $this->client->post($this->url.$path, [
             'headers'     => [
