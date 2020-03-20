@@ -14,7 +14,6 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
-
 class CashierService
 {
     public $environment = 'dev';
@@ -231,6 +230,32 @@ FORM;
                 'price'      => $refund->price,
                 'desc'       => $refund->desc,
                 'order_no'   => $refund->order->no,
+            ],
+        ]);
+
+        return json_decode((string)$response->getBody(), true);
+    }
+
+    /**
+     * * 获取微信支付配置
+     * @param $no
+     * @param $openId
+     * @param string $type
+     * Date: 2020/3/20
+     * @return mixed
+     */
+    public function getWeixinPayConfig($no, $openId, $type = 'mini')
+    {
+        $path = 'api/payments/config';
+
+        $response = $this->client->post($this->url.$path, [
+            'headers'     => [
+                'access-token' => $this->getAccessToken(),
+            ],
+            'form_params' => [
+                'type'    => $type,
+                'no'      => $no,
+                'open_id' => $openId,
             ],
         ]);
 

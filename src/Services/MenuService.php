@@ -46,7 +46,7 @@ class MenuService
     {
         $key = Help::key('menus', $guard, $userId);
 
-        Cache::forget($key);
+        Cache::tags(self::getTags($guard))->forget($key);
     }
 
     /**
@@ -99,7 +99,7 @@ class MenuService
         $key = Help::key('menus', $guard, Auth::guard($guard)->id());
 
         if (app()->environment() == 'local') {
-            Cache::forget($key);
+            Cache::tags(self::getTags($guard))->forget($key);
             self::flush($guard);
         }
 

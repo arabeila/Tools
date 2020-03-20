@@ -169,8 +169,8 @@ class Category extends Model
      */
     public function cache()
     {
-        if(app()->environment() == 'local'){
-            Cache::forget($this->getTable());
+        if (app()->environment() == 'local') {
+            Cache::tags($this->getTable())->forget($this->getTable());
             self::clear();
         }
 
