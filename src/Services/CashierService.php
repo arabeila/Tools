@@ -150,7 +150,8 @@ FORM;
         $info = [];
         $res = [];
         foreach ($orders as $order) {
-            $info[$order['no']] = $order['order_price'];
+            $info[$order['no']]['freight'] = $order['freight'] + $order['payable_feight'];
+            $info[$order['no']]['total_amount'] = $order['order_price'];
             array_push($res, $info);
         }
 
