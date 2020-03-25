@@ -15,8 +15,9 @@ trait LimitTrait
      * 限定用户
      * @param $builder
      * @param $userId
-     * Date: 2019/11/19
      * @return mixed
+     * @deprecated
+     * Date: 2019/11/19
      */
     public function scopeUser($builder, $userId)
     {
@@ -27,8 +28,9 @@ trait LimitTrait
      * 限定店铺
      * @param $builder
      * @param $storeId
-     * Date: 2019/11/19
      * @return mixed
+     * @deprecated
+     * Date: 2019/11/19
      */
     public function scopeStore($builder, $storeId)
     {
