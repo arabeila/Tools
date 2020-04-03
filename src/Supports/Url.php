@@ -20,7 +20,7 @@ class Url
      * Date: 2020/3/20
      * @return string
      */
-    public function removeDirectorySeparator($url)
+    public static function removeDirectorySeparator($url)
     {
         return rtrim($url, '/');
     }
@@ -31,7 +31,7 @@ class Url
      * Date: 2020/3/20
      * @return string
      */
-    public function removeProtocol($url)
+    public static function removeProtocol($url)
     {
         return str_replace(['http:', 'https:'], '', $url);
     }
@@ -42,9 +42,9 @@ class Url
      * Date: 2020/3/20
      * @return string
      */
-    public function parseHttps($url)
+    public static function parseHttps($url)
     {
-        return 'https:'.$this->removeProtocol($url);
+        return 'https:'.self::removeProtocol($url);
     }
 
     /**
@@ -53,8 +53,8 @@ class Url
      * Date: 2020/3/20
      * @return string
      */
-    public function parseHttp($url)
+    public static function parseHttp($url)
     {
-        return 'http:'.$this->removeProtocol($url);
+        return 'http:'.self::removeProtocol($url);
     }
 }
