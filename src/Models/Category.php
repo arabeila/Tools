@@ -58,7 +58,11 @@ class Category extends Model
         static::deleting(function ($category) {
             $category->clear();
 
-            self::query()->where('path', 'like', '%'.$category->attributes[$category->primaryKey].'%')->delete();
+            $search = '%'.$category->path.$category->id.'-%';
+
+            self::query()
+                ->where('path', 'like', $search)
+                ->delete();
         });
     }
 
